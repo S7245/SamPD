@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunksam_lau_geek=self.webpackChunksam_lau_geek||[]).push([[903],{1912:a=>{a.exports=JSON.parse('{"blogBasePath":"/SamPD/blog","blogTitle":"Blog","authorsListPath":"/SamPD/blog/authors"}')}}]);
