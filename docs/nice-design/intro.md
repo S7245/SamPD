@@ -1,6 +1,3 @@
-import Image from '@theme/IdealImage';
-
-
 # Dashbord
 
 ## 集锦
@@ -26,7 +23,3 @@ import Image from '@theme/IdealImage';
 |![](../../static/img/dashboard/Dashboard@33.png)|![](../../static/img/dashboard/Dashboard@34.png)|
 |![](../../static/img/dashboard/Dashboard@35.png)|![](../../static/img/dashboard/Dashboard@36.png)|
 |![](../../static/img/dashboard/Dashboard@37.png)||
-
-
-<Image img={require('../../static/img/dashboard/Dashboard@37.png')} />
-<Image img={require('../../static/img/dashboard/Dashboard@1.png')} />
