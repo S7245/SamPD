@@ -1,0 +1,1206 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>静态代理 · 代理商销售订单原型</title>
+  <style>
+    :root {
+      --bg: #f6f3ee;
+      --panel: #fffdf8;
+      --panel-2: #f1ebe1;
+      --ink: #1e2825;
+      --muted: #66736f;
+      --line: #ded5c8;
+      --line-strong: #b9ad9e;
+      --accent: #16635b;
+      --accent-soft: #dff0ed;
+      --blue: #1f5d8c;
+      --blue-soft: #dfeef9;
+      --amber: #8a5a00;
+      --amber-soft: #fff2cf;
+      --red: #9e2f25;
+      --red-soft: #ffe1dc;
+      --green: #28684e;
+      --green-soft: #dcefe5;
+      --shadow: 0 16px 36px rgba(38, 33, 25, 0.09);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: var(--sans);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    .app {
+      width: 100%;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 22px 16px;
+      background: #222a27;
+      color: #f8f4ec;
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      border-radius: 7px;
+      background: #2d3935;
+      font-weight: 900;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 2px;
+      color: #aebbb6;
+      font-size: 12px;
+    }
+
+    .nav-label {
+      color: #aebbb6;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav a {
+      min-height: 38px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 10px;
+      color: #dce4e0;
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .nav a.active,
+    .nav a:hover {
+      background: #34413d;
+      color: #fff;
+    }
+
+    .nav small {
+      color: #9ba8a3;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .side-note {
+      margin-top: auto;
+      padding: 12px;
+      color: #c6d1cd;
+      background: #2b3532;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 7px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    main {
+      width: 100%;
+      min-width: 0;
+      padding: 26px;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      font-size: 18px;
+    }
+
+    h3 {
+      font-size: 14px;
+    }
+
+    .page-copy {
+      max-width: 830px;
+      margin: 9px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .btn {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 8px 12px;
+      color: var(--ink);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn.ghost {
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-color: #b9d8d2;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .icon {
+      font-family: var(--mono);
+      font-weight: 900;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .metric {
+      min-height: 98px;
+      padding: 15px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 12px;
+      font-size: 24px;
+      line-height: 1.1;
+    }
+
+    .metric small {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .metric.reversal strong {
+      color: var(--red);
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(120px, 1fr)) 1.2fr auto auto;
+      gap: 10px;
+      align-items: end;
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .field {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      min-height: 36px;
+      padding: 7px 9px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(22, 99, 91, 0.13);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(760px, 1fr) minmax(370px, 430px);
+      gap: 16px;
+      margin-top: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 15px;
+      border-bottom: 1px solid var(--line);
+      background: #fffaf0;
+    }
+
+    .panel-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      vertical-align: top;
+    }
+
+    th {
+      color: #51605b;
+      background: #f5efe6;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      cursor: pointer;
+    }
+
+    tbody tr:hover,
+    tbody tr.selected {
+      background: #f8f5ed;
+    }
+
+    .order-no {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .subline {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .money {
+      font-family: var(--mono);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .money.good {
+      color: var(--green);
+    }
+
+    .money.bad {
+      color: var(--red);
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .tag.blue {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .tag.amber {
+      color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .tag.red {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .tag.gray {
+      color: #5c625f;
+      background: #ebe6de;
+    }
+
+    .pagination {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .drawer {
+      position: sticky;
+      top: 18px;
+      max-height: calc(100vh - 36px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .drawer-head {
+      padding: 15px;
+      border-bottom: 1px solid var(--line);
+      background: #222a27;
+      color: #fff;
+    }
+
+    .drawer-head .order-no {
+      color: #bfe3dc;
+    }
+
+    .drawer-head h2 {
+      margin-top: 8px;
+      font-size: 18px;
+    }
+
+    .drawer-body {
+      overflow: auto;
+      padding: 15px;
+    }
+
+    .detail-section {
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .detail-section:first-child {
+      padding-top: 0;
+    }
+
+    .detail-section:last-child {
+      border-bottom: 0;
+    }
+
+    .detail-section h3 {
+      margin-bottom: 10px;
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .kv.full {
+      grid-template-columns: 1fr;
+    }
+
+    .kv div {
+      min-width: 0;
+      padding: 9px;
+      background: #fbf7ef;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .kv span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .kv strong {
+      display: block;
+      margin-top: 5px;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+    }
+
+    .amount-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .amount {
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #fbf7ef;
+    }
+
+    .amount span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .amount strong {
+      display: block;
+      margin-top: 5px;
+      font-family: var(--mono);
+      font-size: 15px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 8px;
+    }
+
+    .flow-item {
+      display: grid;
+      grid-template-columns: 82px minmax(0, 1fr);
+      gap: 9px;
+      padding: 10px;
+      background: #fbf7ef;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .flow-item time {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .flow-item strong {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .flow-item p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .empty {
+      display: none;
+      min-height: 280px;
+      place-items: center;
+      padding: 28px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty.active {
+      display: grid;
+    }
+
+    .empty strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--ink);
+      font-size: 18px;
+    }
+
+    .drawer-placeholder {
+      min-height: 400px;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 1180px) {
+      .toolbar {
+        grid-template-columns: repeat(3, minmax(140px, 1fr));
+      }
+
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .drawer {
+        position: relative;
+        top: auto;
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: relative;
+        height: auto;
+        padding: 16px;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      main {
+        padding: 18px 14px 30px;
+      }
+
+      .topbar {
+        display: grid;
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-head,
+      .pagination {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .kv,
+      .amount-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-wrap {
+        overflow-x: visible;
+      }
+
+      table {
+        min-width: 0;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody {
+        display: grid;
+      }
+
+      tbody tr {
+        display: grid;
+        gap: 0;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      tbody tr.selected {
+        background: #fbf7ef;
+      }
+
+      td {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 8px;
+        padding: 7px 0;
+        border-bottom: 0;
+      }
+
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .nav {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">AG</div>
+        <div>
+          <strong>代理商工作台</strong>
+          <span>静态代理 · 销售订单</span>
+        </div>
+      </div>
+      <div>
+        <div class="nav-label">模块导航</div>
+        <nav class="nav" aria-label="代理商模块">
+          <a href="agent-price-config-list-detail-prototype.html">价格设置 <small>M01</small></a>
+          <a href="agent-users-recharge-prototype.html">我的用户 <small>M02</small></a>
+          <a class="active" href="agent-sales-orders-prototype.html" aria-current="page">销售订单 <small>M03</small></a>
+          <a href="agent-income-billing-prototype.html">我的收入 <small>M04</small></a>
+        </nav>
+      </div>
+      <div class="side-note">
+        M03 只读展示成交订单。用户购买、支付、退款、交付仍走既有用户端链路。
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Agent Sales Orders</p>
+          <h1>销售订单</h1>
+          <p class="page-copy">按支付成功后的成交订单对账，金额来自订单创建时冻结的规格、平台成本、代理售价和预计收入快照。用户付款进入平台账户，平台完成交付或退款后确认最终收入。</p>
+        </div>
+        <button type="button" class="btn ghost" id="showEmpty"><span class="icon">/</span>切换空态</button>
+      </header>
+
+      <section class="metric-grid" aria-label="当前统计周期指标">
+        <article class="metric">
+          <span>本期销售额</span>
+          <strong>$89,120.00</strong>
+          <small>当前统计周期，不随列表筛选变化</small>
+        </article>
+        <article class="metric">
+          <span>本期退款金额</span>
+          <strong>-$3,940.00</strong>
+          <small>平台已退回用户的金额</small>
+        </article>
+        <article class="metric">
+          <span>本期最终收入</span>
+          <strong>$8,430.00</strong>
+          <small>交付或退款完成后确认</small>
+        </article>
+        <article class="metric">
+          <span>待确认收入</span>
+          <strong>$520.00</strong>
+          <small>交付或退款结果未完成</small>
+        </article>
+      </section>
+
+      <section class="toolbar" aria-label="销售订单筛选">
+        <div class="field">
+          <label for="payTime">支付成功时间</label>
+          <select id="payTime">
+            <option>近 30 天</option>
+            <option>本出账周期</option>
+            <option>自定义日期</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="orderType">订单类型</label>
+          <select id="orderType">
+            <option>全部</option>
+            <option>新购</option>
+            <option>续费</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="country">国家</label>
+          <select id="country">
+            <option>全部成交国家</option>
+            <option>US</option>
+            <option>JP</option>
+            <option>DE</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="deliveryStatus">交付状态</label>
+          <select id="deliveryStatus">
+            <option>全部</option>
+            <option>交付中</option>
+            <option>全部交付成功</option>
+            <option>部分交付已退款</option>
+            <option>交付失败已退款</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="incomeStatus">收入状态</label>
+          <select id="incomeStatus">
+            <option>全部</option>
+            <option>待确认</option>
+            <option>已确认</option>
+            <option>部分退款后确认</option>
+            <option>全额退款</option>
+            <option>收入异常</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="keyword">搜索</label>
+          <input id="keyword" type="search" placeholder="订单号 / 用户账号">
+        </div>
+        <button type="button" class="btn">重置</button>
+        <button type="button" class="btn primary">查询</button>
+      </section>
+
+      <div class="content-grid">
+        <section class="panel" aria-label="销售订单列表">
+          <div class="panel-head">
+            <div>
+              <h2>成交订单明细</h2>
+              <p>默认按支付成功时间倒序，每页固定 20 条。</p>
+            </div>
+            <span class="tag gray">不含待支付 / 已取消 / 已过期</span>
+          </div>
+          <div class="table-wrap" id="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>订单号 / 时间</th>
+                  <th>用户账号</th>
+                  <th>类型</th>
+                  <th>状态</th>
+                  <th>规格摘要</th>
+                  <th>销售额</th>
+                  <th>退款金额</th>
+                  <th>最终收入</th>
+                </tr>
+              </thead>
+              <tbody id="orderRows">
+                <tr class="selected" data-order="0">
+                  <td data-label="订单号 / 时间">
+                    <span class="order-no">SP-20260608-0217</span>
+                    <span class="subline">支付 2026-06-08 10:16</span>
+                    <span class="subline">创建 2026-06-08 10:11</span>
+                  </td>
+                  <td data-label="用户账号">acme_admin</td>
+                  <td data-label="类型"><span class="tag blue">新购</span></td>
+                  <td data-label="状态">
+                    <div class="tag-list">
+                      <span class="tag green">已支付</span>
+                      <span class="tag green">全部交付成功</span>
+                      <span class="tag green">已确认</span>
+                    </div>
+                  </td>
+                  <td data-label="规格摘要">US · 共享 · 标准 · 20 IP · 30 天</td>
+                  <td data-label="销售额"><span class="money">$240.00</span></td>
+                  <td data-label="退款金额"><span class="money">$0.00</span></td>
+                  <td data-label="最终收入"><span class="money good">$40.00</span></td>
+                </tr>
+                <tr data-order="1">
+                  <td data-label="订单号 / 时间">
+                    <span class="order-no">SP-20260607-0092</span>
+                    <span class="subline">支付 2026-06-07 18:42</span>
+                    <span class="subline">创建 2026-06-07 18:39</span>
+                  </td>
+                  <td data-label="用户账号">ops_renew</td>
+                  <td data-label="类型"><span class="tag blue">续费</span></td>
+                  <td data-label="状态">
+                    <div class="tag-list">
+                      <span class="tag green">已支付</span>
+                      <span class="tag amber">部分交付已退款</span>
+                      <span class="tag amber">部分退款后确认</span>
+                    </div>
+                  </td>
+                  <td data-label="规格摘要">US · 独享 · 高级 · 20 IP · 30 天</td>
+                  <td data-label="销售额"><span class="money">$240.00</span></td>
+                  <td data-label="退款金额"><span class="money bad">-$36.00</span></td>
+                  <td data-label="最终收入"><span class="money good">$34.00</span><span class="subline">退款影响 -$6.00</span></td>
+                </tr>
+                <tr data-order="2">
+                  <td data-label="订单号 / 时间">
+                    <span class="order-no">SP-20260606-0041</span>
+                    <span class="subline">支付 2026-06-06 09:28</span>
+                    <span class="subline">创建 2026-06-06 09:23</span>
+                  </td>
+                  <td data-label="用户账号">build_team</td>
+                  <td data-label="类型"><span class="tag blue">续费</span></td>
+                  <td data-label="状态">
+                    <div class="tag-list">
+                      <span class="tag green">已支付</span>
+                      <span class="tag red">交付失败已退款</span>
+                      <span class="tag red">全额退款</span>
+                    </div>
+                  </td>
+                  <td data-label="规格摘要">JP · 共享 · 标准 · 10 IP · 7 天</td>
+                  <td data-label="销售额"><span class="money">$48.00</span></td>
+                  <td data-label="退款金额"><span class="money bad">-$48.00</span></td>
+                  <td data-label="最终收入"><span class="money">$0.00</span><span class="subline">退款影响 -$8.00</span></td>
+                </tr>
+                <tr data-order="3">
+                  <td data-label="订单号 / 时间">
+                    <span class="order-no">SP-20260605-0033</span>
+                    <span class="subline">支付 2026-06-05 13:08</span>
+                    <span class="subline">创建 2026-06-05 13:01</span>
+                  </td>
+                  <td data-label="用户账号">northstar</td>
+                  <td data-label="类型"><span class="tag blue">新购</span></td>
+                  <td data-label="状态">
+                    <div class="tag-list">
+                      <span class="tag green">已支付</span>
+                      <span class="tag amber">部分交付已退款</span>
+                      <span class="tag amber">部分退款后确认</span>
+                    </div>
+                  </td>
+                  <td data-label="规格摘要">DE · 独享 · 标准 · 12 IP · 30 天</td>
+                  <td data-label="销售额"><span class="money">$216.00</span></td>
+                  <td data-label="退款金额"><span class="money bad">-$54.00</span></td>
+                  <td data-label="最终收入"><span class="money good">$18.00</span><span class="subline">退款影响 -$6.00</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="empty" id="emptyState">
+            <div>
+              <strong>未找到匹配订单</strong>
+              <span>调整支付时间、国家、订单类型或清空搜索关键词后重试。</span>
+            </div>
+          </div>
+          <div class="pagination">
+            <span>共 4 条示例数据 · 每页 20 条</span>
+            <div>
+              <button type="button" class="btn" disabled>上一页</button>
+              <button type="button" class="btn" disabled>下一页</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="drawer" aria-label="销售订单详情">
+          <div class="drawer-head" id="detailHead">
+            <span class="order-no">SP-20260608-0217</span>
+            <h2>销售订单详情</h2>
+            <div class="tag-list" id="detailTags">
+              <span class="tag green">已支付</span>
+              <span class="tag green">全部交付成功</span>
+              <span class="tag green">已确认</span>
+            </div>
+          </div>
+          <div class="drawer-body" id="detailBody"></div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const details = [
+      {
+        orderNo: "SP-20260608-0217",
+        type: "新购",
+        user: "acme_admin",
+        userId: "U-10382",
+        relation: "创建订单时 agency_id=AG-2086",
+        created: "2026-06-08 10:11",
+        paid: "2026-06-08 10:16",
+        delivery: "2026-06-08 10:27",
+        renewal: "不适用",
+        spec: "US / 共享 / 标准 / UDP 关闭 / 100Mbps / 20 IP / 30 天",
+        amounts: ["$240.00", "$200.00", "$40.00", "$0.00", "$0.00", "$40.00"],
+        statusTags: ["已支付", "全部交付成功", "已确认"],
+        tagTone: ["green", "green", "green"],
+        payment: "用户钱包 $60.00 + 在线 $180.00，支付方式 Stripe，资金进入平台账户",
+        deliverySummary: "购买 20，已交付 20，失败 0，退款 $0.00",
+        flows: [
+          ["10:16", "平台收款", "$240.00", "用户付款进入平台账户，生成预计收入 $40.00"],
+          ["10:27", "收入确认", "$40.00", "全部 IP 交付成功，最终收入等于预计收入"]
+        ]
+      },
+      {
+        orderNo: "SP-20260607-0092",
+        type: "续费",
+        user: "ops_renew",
+        userId: "U-10426",
+        relation: "创建订单时 agency_id=AG-2086",
+        created: "2026-06-07 18:39",
+        paid: "2026-06-07 18:42",
+        delivery: "2026-06-07 18:58",
+        renewal: "关联原订单 SP-20260508-0168；续费下单时已重新校验 US 仍可售并按当前价格生成新快照",
+        spec: "US / 独享 / 高级 / UDP 开启 / 300Mbps / 20 IP / 30 天",
+        amounts: ["$240.00", "$200.00", "$40.00", "-$36.00", "-$6.00", "$34.00"],
+        statusTags: ["已支付", "部分交付已退款", "部分退款后确认"],
+        tagTone: ["green", "amber", "amber"],
+        payment: "用户钱包 $120.00 + 在线 $120.00，支付方式 PayPal，资金进入平台账户",
+        deliverySummary: "购买 20，已交付 17，失败 3，退款 $36.00 至用户钱包",
+        flows: [
+          ["18:42", "平台收款", "$240.00", "用户付款进入平台账户，生成预计收入 $40.00"],
+          ["18:58", "平台退款", "-$36.00", "3 个 IP 交付失败，平台退款至用户钱包"],
+          ["18:58", "最终收入确认", "$34.00", "按 17 个已交付 IP 计算最终收入，退款影响 -$6.00"]
+        ]
+      },
+      {
+        orderNo: "SP-20260606-0041",
+        type: "续费",
+        user: "build_team",
+        userId: "U-10116",
+        relation: "创建订单时 agency_id=AG-2086",
+        created: "2026-06-06 09:23",
+        paid: "2026-06-06 09:28",
+        delivery: "2026-06-06 09:45",
+        renewal: "关联原订单 SP-20260530-0012；续费下单时已重新校验 JP 仍可售并按当前价格生成新快照",
+        spec: "JP / 共享 / 标准 / UDP 关闭 / 100Mbps / 10 IP / 7 天",
+        amounts: ["$48.00", "$40.00", "$8.00", "-$48.00", "-$8.00", "$0.00"],
+        statusTags: ["已支付", "交付失败已退款", "全额退款"],
+        tagTone: ["green", "red", "red"],
+        payment: "用户钱包 $48.00，支付方式 Wallet，资金进入平台账户",
+        deliverySummary: "购买 10，已交付 0，失败 10，退款 $48.00 至用户钱包",
+        flows: [
+          ["09:28", "平台收款", "$48.00", "用户付款进入平台账户，生成预计收入 $8.00"],
+          ["09:45", "平台全额退款", "-$48.00", "全部 IP 交付失败，平台退款至用户钱包"],
+          ["09:45", "最终收入确认", "$0.00", "全额退款后本单最终收入为 $0.00"]
+        ]
+      },
+      {
+        orderNo: "SP-20260605-0033",
+        type: "新购",
+        user: "northstar",
+        userId: "U-09971",
+        relation: "创建订单时 agency_id=AG-2086",
+        created: "2026-06-05 13:01",
+        paid: "2026-06-05 13:08",
+        delivery: "2026-06-05 13:31",
+        renewal: "不适用",
+        spec: "DE / 独享 / 标准 / UDP 关闭 / 100Mbps / 12 IP / 30 天",
+        amounts: ["$216.00", "$192.00", "$24.00", "-$54.00", "-$6.00", "$18.00"],
+        statusTags: ["已支付", "部分交付已退款", "部分退款后确认"],
+        tagTone: ["green", "amber", "amber"],
+        payment: "在线 $216.00，支付方式 Stripe，资金进入平台账户",
+        deliverySummary: "购买 12，已交付 9，失败 3，退款 $54.00 至用户钱包",
+        flows: [
+          ["13:08", "平台收款", "$216.00", "用户付款进入平台账户，生成预计收入 $24.00"],
+          ["13:31", "平台退款", "-$54.00", "3 个 IP 交付失败，平台退款至用户钱包"],
+          ["13:31", "最终收入确认", "$18.00", "按 9 个已交付 IP 计算最终收入，退款影响 -$6.00"]
+        ]
+      }
+    ];
+
+    const body = document.getElementById("detailBody");
+    const head = document.getElementById("detailHead");
+    const tags = document.getElementById("detailTags");
+    const rows = Array.from(document.querySelectorAll("#orderRows tr"));
+    const emptyState = document.getElementById("emptyState");
+    const tableWrap = document.getElementById("tableWrap");
+
+    function toneClass(tone) {
+      return `tag ${tone}`;
+    }
+
+    function renderDetail(index) {
+      const item = details[index];
+      head.querySelector(".order-no").textContent = item.orderNo;
+      tags.innerHTML = item.statusTags.map((tag, i) => `<span class="${toneClass(item.tagTone[i])}">${tag}</span>`).join("");
+      body.innerHTML = `
+        <section class="detail-section">
+          <h3>订单与用户快照</h3>
+          <div class="kv">
+            <div><span>订单类型</span><strong>${item.type}</strong></div>
+            <div><span>用户账号</span><strong>${item.user}</strong></div>
+            <div><span>用户 ID</span><strong>${item.userId}</strong></div>
+            <div><span>归属快照</span><strong>${item.relation}</strong></div>
+            <div><span>创建时间</span><strong>${item.created}</strong></div>
+            <div><span>支付成功时间</span><strong>${item.paid}</strong></div>
+          </div>
+        </section>
+        <section class="detail-section">
+          <h3>续费重新校验</h3>
+          <div class="kv full">
+            <div><span>校验结果</span><strong>${item.renewal}</strong></div>
+          </div>
+        </section>
+        <section class="detail-section">
+          <h3>规格快照</h3>
+          <div class="kv full">
+            <div><span>冻结规格</span><strong>${item.spec}</strong></div>
+          </div>
+        </section>
+        <section class="detail-section">
+          <h3>价格与最终收入</h3>
+          <div class="amount-grid">
+            <div class="amount"><span>销售额</span><strong>${item.amounts[0]}</strong></div>
+            <div class="amount"><span>平台成本</span><strong>${item.amounts[1]}</strong></div>
+            <div class="amount"><span>预计收入</span><strong>${item.amounts[2]}</strong></div>
+            <div class="amount"><span>平台退款</span><strong class="money bad">${item.amounts[3]}</strong></div>
+            <div class="amount"><span>退款影响</span><strong class="money bad">${item.amounts[4]}</strong></div>
+            <div class="amount"><span>最终收入</span><strong class="money good">${item.amounts[5]}</strong></div>
+          </div>
+        </section>
+        <section class="detail-section">
+          <h3>支付与交付</h3>
+          <div class="kv full">
+            <div><span>支付拆分</span><strong>${item.payment}</strong></div>
+            <div><span>交付 / 退款</span><strong>${item.deliverySummary}</strong></div>
+          </div>
+        </section>
+        <section class="detail-section">
+          <h3>收入明细</h3>
+          <div class="timeline">
+            ${item.flows.map(flow => `
+              <div class="flow-item">
+                <time>${flow[0]}</time>
+                <div>
+                  <strong><span>${flow[1]}</span><span>${flow[2]}</span></strong>
+                  <p>${flow[3]}</p>
+                </div>
+              </div>
+            `).join("")}
+          </div>
+        </section>
+      `;
+    }
+
+    rows.forEach((row, index) => {
+      row.addEventListener("click", () => {
+        rows.forEach(item => item.classList.remove("selected"));
+        row.classList.add("selected");
+        tableWrap.style.display = "";
+        emptyState.classList.remove("active");
+        renderDetail(index);
+      });
+    });
+
+    document.getElementById("showEmpty").addEventListener("click", () => {
+      const showingEmpty = emptyState.classList.toggle("active");
+      tableWrap.style.display = showingEmpty ? "none" : "";
+    });
+
+    renderDetail(0);
+  </script>
+</body>
+</html>

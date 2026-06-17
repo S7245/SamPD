@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunksam_lau_geek=self.webpackChunksam_lau_geek||[]).push([[3490],{3490:(e,a,s)=>{s.d(a,{createInfoServices:()=>k.v});var k=s(1885);s(7960)}}]);

@@ -1,0 +1,1627 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>静态代理 · 代理商价格配置列表/详情原型</title>
+  <style>
+    :root {
+      --bg: #f6f3ee;
+      --panel: #fffdf8;
+      --panel-2: #f1ebe1;
+      --ink: #1e2825;
+      --muted: #66736f;
+      --line: #ded5c8;
+      --line-strong: #b9ad9e;
+      --accent: #16635b;
+      --accent-soft: #dff0ed;
+      --amber: #8a5a00;
+      --amber-soft: #fff2cf;
+      --red: #9e2f25;
+      --red-soft: #ffe1dc;
+      --green: #28684e;
+      --green-soft: #dcefe5;
+      --shadow: 0 16px 36px rgba(38, 33, 25, 0.09);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: var(--sans);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 22px 16px;
+      background: #222a27;
+      color: #f8f4ec;
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      border-radius: 7px;
+      background: #2d3935;
+      font-weight: 900;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 2px;
+      color: #aebbb6;
+      font-size: 12px;
+    }
+
+    .nav-label {
+      color: #aebbb6;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav a {
+      min-height: 38px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 10px;
+      color: #dce4e0;
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .nav a.active,
+    .nav a:hover {
+      background: #34413d;
+      color: #fff;
+    }
+
+    .nav small {
+      color: #9ba8a3;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .side-note {
+      margin-top: auto;
+      padding: 12px;
+      color: #c6d1cd;
+      background: #2b3532;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 7px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    main {
+      min-width: 0;
+      padding: 26px;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      font-size: 18px;
+    }
+
+    h3 {
+      font-size: 14px;
+    }
+
+    .page-copy {
+      max-width: 800px;
+      margin: 9px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 8px 12px;
+      color: var(--ink);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn.danger {
+      color: var(--red);
+      background: var(--red-soft);
+      border-color: #f3b2aa;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .icon {
+      font-family: var(--mono);
+      font-weight: 900;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .metric {
+      min-height: 98px;
+      padding: 15px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 12px;
+      font-family: var(--mono);
+      font-size: 22px;
+    }
+
+    .metric p {
+      margin: 7px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      min-height: 58px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fbf7ef;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .input,
+    .select {
+      min-height: 36px;
+      min-width: 190px;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .segmented {
+      display: inline-grid;
+      grid-auto-flow: column;
+      gap: 3px;
+      padding: 3px;
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .segmented button {
+      min-height: 30px;
+      padding: 6px 10px;
+      color: var(--muted);
+      background: transparent;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .segmented button.active {
+      color: var(--ink);
+      background: #fff;
+      box-shadow: 0 6px 14px rgba(32, 43, 40, 0.08);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+      font-size: 13px;
+    }
+
+    th {
+      color: var(--muted);
+      background: #fbfaf6;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .country-cell {
+      display: grid;
+      gap: 4px;
+    }
+
+    .country-cell strong {
+      font-size: 14px;
+    }
+
+    .mono {
+      font-family: var(--mono);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .tag {
+      width: fit-content;
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .tag.amber {
+      color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .tag.red {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .tag.neutral {
+      color: var(--muted);
+      background: #eee8df;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 338px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .summary-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 12px 14px;
+      margin: 0 0 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .summary-bar strong {
+      margin-right: 8px;
+    }
+
+    .alert {
+      display: none;
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 800;
+      line-height: 1.45;
+    }
+
+    .alert.show {
+      display: block;
+    }
+
+    .alert.warn {
+      color: var(--amber);
+      background: var(--amber-soft);
+      border: 1px solid #efc478;
+    }
+
+    .alert.error {
+      color: var(--red);
+      background: var(--red-soft);
+      border: 1px solid #efa39b;
+    }
+
+    .group {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .group:last-child {
+      border-bottom: 0;
+    }
+
+    .group-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 13px 14px;
+      background: #f6f1e9;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .price-table th:nth-child(1),
+    .price-table td:nth-child(1) {
+      width: 22%;
+    }
+
+    .stepper {
+      width: 162px;
+      display: grid;
+      grid-template-columns: 30px minmax(70px, 1fr) 30px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .stepper button {
+      min-height: 34px;
+      color: var(--ink);
+      background: #eee7dd;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-weight: 900;
+    }
+
+    .stepper input {
+      width: 100%;
+      min-width: 0;
+      height: 34px;
+      padding: 4px 6px;
+      border: 0;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      text-align: center;
+      outline: none;
+      font-family: var(--mono);
+      font-weight: 800;
+    }
+
+    .stepper button:disabled,
+    .stepper input:disabled {
+      cursor: not-allowed;
+      color: #8b928f;
+      background: #f1f1ee;
+    }
+
+    .row-error {
+      display: none;
+      margin-top: 4px;
+      color: var(--red);
+      font-size: 11px;
+    }
+
+    .has-error .row-error {
+      display: block;
+    }
+
+    .calc {
+      position: sticky;
+      top: 18px;
+    }
+
+    .calc-body {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .result {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      color: #f8f4ec;
+      background: #222a27;
+      border-radius: 7px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      color: #c7d2ce;
+      font-size: 13px;
+    }
+
+    .result-row strong {
+      color: #fff;
+      font-family: var(--mono);
+    }
+
+    .result-row.highlight {
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+
+    .result-row.highlight strong {
+      color: #f2ce88;
+      font-size: 22px;
+    }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      min-height: 340px;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .empty-box {
+      max-width: 520px;
+    }
+
+    .empty-box h2 {
+      margin-bottom: 10px;
+    }
+
+    .empty-box p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(30, 40, 37, 0.45);
+      z-index: 20;
+    }
+
+    .modal-backdrop.show {
+      display: grid;
+    }
+
+    .modal {
+      width: min(480px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: 0 30px 80px rgba(21, 32, 29, 0.3);
+      overflow: hidden;
+    }
+
+    .modal header,
+    .modal footer {
+      padding: 15px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      border-top: 1px solid var(--line);
+      border-bottom: 0;
+    }
+
+    .modal-body {
+      display: grid;
+      gap: 12px;
+      padding: 15px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      transform: translateY(14px);
+      opacity: 0;
+      pointer-events: none;
+      padding: 10px 12px;
+      color: #fff;
+      background: #222a27;
+      border-radius: 6px;
+      box-shadow: var(--shadow);
+      font-weight: 900;
+      transition: 160ms ease;
+      z-index: 30;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 1120px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .calc {
+        position: static;
+      }
+    }
+
+    @media (max-width: 720px) {
+      main {
+        padding: 16px;
+      }
+
+      .topbar {
+        display: grid;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .toolbar,
+      .actions {
+        width: 100%;
+        justify-content: stretch;
+      }
+
+      .input,
+      .select,
+      .btn {
+        width: 100%;
+      }
+
+      .segmented {
+        width: 100%;
+        grid-auto-flow: row;
+      }
+
+      table {
+        min-width: 780px;
+      }
+
+      .calc-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="代理商导航">
+      <div class="brand">
+        <div class="brand-mark">IP</div>
+        <div>
+          <strong>代理商工作台</strong>
+          <span>Static Proxy Agency</span>
+        </div>
+      </div>
+      <div>
+        <p class="nav-label">模块</p>
+        <nav class="nav" aria-label="代理商模块导航">
+          <a class="active" href="agent-price-config-list-detail-prototype.html" aria-current="page">价格设置 <small>01</small></a>
+          <a href="agent-users-recharge-prototype.html">我的用户 <small>02</small></a>
+          <a href="agent-sales-orders-prototype.html">销售订单 <small>03</small></a>
+          <a href="agent-income-billing-prototype.html">我的收入 <small>04</small></a>
+        </nav>
+      </div>
+      <div class="side-note">新版原型覆盖 M01：配置列表、配置详情、新增配置、平台下架只读、下级购买页无可售国家空态。</div>
+    </aside>
+
+    <main>
+      <section class="view active" id="listView">
+        <div class="topbar">
+          <div>
+            <p class="eyebrow">M01 · CONFIG LIST</p>
+            <h1>代理商首页-价格设置</h1>
+            <p class="page-copy">列表只展示代理商已新增过配置的国家。新增配置后，该国家进入代理商下级用户的可售范围；未新增配置的国家不展示、不允许购买。</p>
+          </div>
+          <div class="actions">
+            <button class="btn" type="button" id="showBuyerEmpty">查看下级空态</button>
+            <button class="btn primary" type="button" id="openAdd">+ 新增配置</button>
+          </div>
+        </div>
+
+        <div class="metric-grid" aria-label="代理商指标">
+          <div class="metric"><span>代理钱包余额</span><strong>$12,340.00</strong><p>可用于给下级用户充值</p></div>
+          <div class="metric"><span>本月销售额</span><strong>$89,120.00</strong><p>销售订单模块细化口径</p></div>
+          <div class="metric"><span>本月价差收益</span><strong>$8,430.00</strong><p>以成交订单快照为准</p></div>
+          <div class="metric"><span>已配置 / 可配置国家</span><strong id="countryMetric">-</strong><p>只统计国家维度</p></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>配置列表</h2>
+              <p class="page-copy">排序：最近更新时间倒序 → 国家代码 A-Z。</p>
+            </div>
+            <div class="toolbar">
+              <input class="input" id="searchInput" name="searchInput" type="search" placeholder="搜索国家 / 代码" autocomplete="off">
+              <div class="segmented" aria-label="价差策略筛选">
+                <button type="button" class="active" data-filter="all">全部</button>
+                <button type="button" data-filter="platform">按平台价售卖</button>
+                <button type="button" data-filter="markup">已有加价</button>
+              </div>
+            </div>
+          </div>
+          <div id="listContent"></div>
+        </div>
+      </section>
+
+      <section class="view" id="detailView">
+        <div class="topbar">
+          <div>
+            <p class="eyebrow">M01 · CONFIG DETAIL</p>
+            <h1 id="detailTitle">配置详情</h1>
+            <p class="page-copy">详情页负责单国家共享 / 独享加价编辑和售价试算。平台下架国家进入只读态。</p>
+          </div>
+          <div class="actions">
+            <button class="btn" type="button" id="backToList">← 返回配置列表</button>
+            <button class="btn danger" type="button" id="clearMarkup">清空当前国家加价</button>
+            <button class="btn primary" type="button" id="saveConfig" disabled>保存当前国家</button>
+          </div>
+        </div>
+
+        <div class="summary-bar" id="summaryBar"></div>
+        <div class="alert warn" id="downAlert">该国家已被平台下架，当前详情仅支持历史配置查看，不允许销售或编辑。</div>
+        <div class="alert warn" id="dirtyAlert">当前国家有未保存加价，请保存后生效。</div>
+        <div class="alert error" id="invalidAlert">存在非法加价，保存已禁用。</div>
+
+        <div class="detail-grid">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>价格设置</h2>
+                <p class="page-copy">页面只编辑代理加价 / 差额，最终售价由平台价格 + 代理加价实时计算。</p>
+              </div>
+              <div class="segmented" aria-label="共享独享切换">
+                <button type="button" class="active" data-mode="shared">共享</button>
+                <button type="button" data-mode="exclusive">独享</button>
+              </div>
+            </div>
+            <div id="priceGroups"></div>
+          </div>
+
+          <aside class="panel calc">
+            <div class="panel-head">
+              <div>
+                <h2>价格计算器</h2>
+                <p class="page-copy">只读试算，不反写配置。</p>
+              </div>
+            </div>
+            <div class="calc-body" id="calculatorBody">
+              <div class="segmented" aria-label="计算器共享独享">
+                <button type="button" class="active" data-calc-mode="shared">共享</button>
+                <button type="button" data-calc-mode="exclusive">独享</button>
+              </div>
+              <div class="field">
+                <label for="calcQuality">品质</label>
+                <select class="select" id="calcQuality" name="calcQuality"></select>
+              </div>
+              <div class="calc-grid">
+                <div class="field">
+                  <label for="calcUdp">UDP</label>
+                  <select class="select" id="calcUdp" name="calcUdp"></select>
+                </div>
+                <div class="field">
+                  <label for="calcBandwidth">带宽</label>
+                  <select class="select" id="calcBandwidth" name="calcBandwidth"></select>
+                </div>
+                <div class="field">
+                  <label for="calcConnection">连接数</label>
+                  <select class="select" id="calcConnection" name="calcConnection"></select>
+                </div>
+                <div class="field">
+                  <label for="calcDays">购买天数</label>
+                  <select class="select" id="calcDays" name="calcDays"></select>
+                </div>
+                <div class="field">
+                  <label for="calcQty">购买数量</label>
+                  <select class="select" id="calcQty" name="calcQty"></select>
+                </div>
+              </div>
+              <div class="result" aria-live="polite">
+                <div class="result-row"><span>平台价格</span><strong id="calcPlatform">$0.00</strong></div>
+                <div class="result-row"><span>代理加价</span><strong id="calcMarkup">$0.00</strong></div>
+                <div class="result-row highlight"><span>最终售价</span><strong id="calcFinal">$0.00</strong></div>
+                <div class="result-row"><span>预计价差</span><strong id="calcDiff">$0.00</strong></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="buyerEmptyView">
+        <div class="topbar">
+          <div>
+            <p class="eyebrow">LINKED STATE</p>
+            <h1>下级用户购买页空态</h1>
+            <p class="page-copy">当代理商未新增任何国家配置时，下级用户不展示平台默认国家列表。</p>
+          </div>
+          <div class="actions">
+            <button class="btn" type="button" id="backFromBuyer">← 返回配置列表</button>
+          </div>
+        </div>
+        <div class="panel empty">
+          <div class="empty-box">
+            <h2>暂无可购买国家</h2>
+            <p>当前代理商尚未开通任何静态代理国家配置。请联系代理商开通后再购买。</p>
+            <button class="btn primary" type="button">联系代理商</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="addModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+      <header>
+        <h2 id="addTitle">新增国家配置</h2>
+      </header>
+      <div class="modal-body">
+        <div class="field">
+          <label for="countrySelect">国家</label>
+          <select class="select" id="countrySelect" name="countrySelect"></select>
+        </div>
+        <div class="alert warn show">新增后共享 / 独享所有代理加价默认为 0，该国家将进入代理商销售范围。</div>
+      </div>
+      <footer>
+        <button class="btn" type="button" data-close-modal>取消</button>
+        <button class="btn primary" type="button" id="confirmAdd">确认新增</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="leaveModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="leaveTitle">
+      <header>
+        <h2 id="leaveTitle">当前国家有未保存加价</h2>
+      </header>
+      <div class="modal-body">
+        <p class="page-copy">离开后未保存变更会丢失。</p>
+      </div>
+      <footer>
+        <button class="btn" type="button" data-close-modal>留在当前页</button>
+        <button class="btn danger" type="button" id="confirmLeave">放弃并离开</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">已保存</div>
+
+  <script>
+    const platformCountries = [
+      { code: "US", name: "United States", status: "active", modifier: 1 },
+      { code: "JP", name: "Japan", status: "active", modifier: 1.08 },
+      { code: "DE", name: "Germany", status: "down", modifier: 0.96 },
+      { code: "SG", name: "Singapore", status: "active", modifier: 1.14 },
+      { code: "GB", name: "United Kingdom", status: "active", modifier: 1.02 },
+      { code: "FR", name: "France", status: "active", modifier: 1.01 }
+    ];
+
+    const groups = [
+      {
+        id: "quality",
+        title: "品质",
+        desc: "基础 / 标准 / 高端",
+        type: "amount",
+        options: [
+          { key: "basic", label: "基础", shared: 8.4, exclusive: 14.2 },
+          { key: "standard", label: "标准", shared: 10, exclusive: 18 },
+          { key: "premium", label: "高端", shared: 12.8, exclusive: 22.4 }
+        ]
+      },
+      {
+        id: "udp",
+        title: "UDP",
+        desc: "关闭 / 开启",
+        type: "amount",
+        options: [
+          { key: "off", label: "关闭", shared: 0, exclusive: 0 },
+          { key: "on", label: "开启", shared: 0.2, exclusive: 0.36 }
+        ]
+      },
+      {
+        id: "bandwidth",
+        title: "带宽",
+        desc: "按月度带宽包计价",
+        type: "amount",
+        options: [
+          { key: "250", label: "250 GB", shared: 0, exclusive: 0 },
+          { key: "1000", label: "1,000 GB", shared: 0.4, exclusive: 0.7 },
+          { key: "5000", label: "5,000 GB", shared: 1.8, exclusive: 3.2 }
+        ]
+      },
+      {
+        id: "connection",
+        title: "连接数",
+        desc: "每 IP 并发连接数",
+        type: "amount",
+        options: [
+          { key: "50", label: "50", shared: 0, exclusive: 0 },
+          { key: "200", label: "200", shared: 0.06, exclusive: 0.1 },
+          { key: "500", label: "500", shared: 0.12, exclusive: 0.22 }
+        ]
+      },
+      {
+        id: "days",
+        title: "购买天数倍率",
+        desc: "周期倍率",
+        type: "coefficient",
+        options: [
+          { key: "15", label: "15 天", shared: 0.58, exclusive: 0.58 },
+          { key: "30", label: "30 天", shared: 1, exclusive: 1 },
+          { key: "90", label: "90 天", shared: 2.85, exclusive: 2.85 },
+          { key: "365", label: "1 年", shared: 12, exclusive: 12 }
+        ]
+      },
+      {
+        id: "quantity",
+        title: "购买数量系数",
+        desc: "数量折扣或加价系数",
+        type: "coefficient",
+        options: [
+          { key: "1", label: "1+", shared: 1, exclusive: 1 },
+          { key: "50", label: "50+", shared: 0.98, exclusive: 0.98 },
+          { key: "100", label: "100+", shared: 0.95, exclusive: 0.95 },
+          { key: "500", label: "500+", shared: 0.9, exclusive: 0.9 }
+        ]
+      }
+    ];
+
+    const state = {
+      view: "list",
+      filter: "all",
+      search: "",
+      detailCode: null,
+      mode: "shared",
+      calcMode: "shared",
+      dirty: false,
+      pendingLeave: null,
+      savedSnapshot: "",
+      calcSelections: {
+        quality: "standard",
+        udp: "off",
+        bandwidth: "1000",
+        connection: "200",
+        days: "30",
+        quantity: "100"
+      },
+      records: []
+    };
+
+    function buildRecords() {
+      return [
+        createRecord("US", "2026-06-06 18:20", 0.02, false),
+        createRecord("JP", "2026-06-05 10:12", 0.01, false),
+        createRecord("DE", "2026-06-01 09:30", 0, true)
+      ];
+    }
+
+    function createRecord(code, updatedAt, seed, forceZero) {
+      return {
+        code,
+        createdAt: updatedAt,
+        updatedAt,
+        markups: {
+          shared: buildMarkup(forceZero ? 0 : seed, false),
+          exclusive: buildMarkup(forceZero ? 0 : seed + 0.01, true)
+        }
+      };
+    }
+
+    function buildMarkup(seed, stronger) {
+      const markups = {};
+      groups.forEach(group => {
+        markups[group.id] = {};
+        group.options.forEach((option, index) => {
+          const value = seed && index % 2 === 1 ? seed + (stronger ? 0.01 : 0) : 0;
+          markups[group.id][option.key] = round(value);
+        });
+      });
+      return markups;
+    }
+
+    function totalVariableCount() {
+      return groups.reduce((sum, group) => sum + group.options.length, 0);
+    }
+
+    function activePlatformCountries() {
+      return platformCountries.filter(country => country.status === "active");
+    }
+
+    function platformCountry(code) {
+      return platformCountries.find(country => country.code === code);
+    }
+
+    function currentRecord() {
+      return state.records.find(record => record.code === state.detailCode);
+    }
+
+    function isDown(record) {
+      return platformCountry(record.code)?.status === "down";
+    }
+
+    function round(value) {
+      return Math.round((Number(value) || 0) * 100) / 100;
+    }
+
+    function money(value) {
+      return `$${(Number(value) || 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
+    }
+
+    function groupType(groupId) {
+      return groups.find(group => group.id === groupId)?.type || "amount";
+    }
+
+    function markupCount(record, mode) {
+      let count = 0;
+      groups.forEach(group => {
+        group.options.forEach(option => {
+          if (Number(record.markups[mode][group.id][option.key]) > 0) count += 1;
+        });
+      });
+      return count;
+    }
+
+    function strategySummary(record, mode) {
+      const count = markupCount(record, mode);
+      const total = totalVariableCount();
+      if (count === 0) return { label: "按平台价售卖", tone: "neutral" };
+      if (count === total) return { label: `全量加价 ${total} / ${total} 项`, tone: "green" };
+      return { label: `已加价 ${count} / ${total} 项`, tone: "green" };
+    }
+
+    function serialize() {
+      return JSON.stringify(state.records);
+    }
+
+    function setSnapshot() {
+      state.savedSnapshot = serialize();
+      state.dirty = false;
+    }
+
+    function updateDirty() {
+      state.dirty = serialize() !== state.savedSnapshot;
+    }
+
+    function showView(view) {
+      state.view = view;
+      document.querySelectorAll(".view").forEach(section => {
+        section.classList.toggle("active", section.id === `${view}View`);
+      });
+    }
+
+    function render() {
+      updateDirty();
+      if (state.view === "list") {
+        showView("list");
+        renderList();
+      }
+      if (state.view === "detail") {
+        showView("detail");
+        renderDetail();
+      }
+      if (state.view === "buyerEmpty") {
+        showView("buyerEmpty");
+      }
+    }
+
+    function filteredRecords() {
+      const q = state.search.trim().toLowerCase();
+      return [...state.records]
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.code.localeCompare(b.code))
+        .filter(record => {
+          const country = platformCountry(record.code);
+          const haystack = `${country.name} ${country.code}`.toLowerCase();
+          if (q && !haystack.includes(q)) return false;
+          const hasMarkup = markupCount(record, "shared") > 0 || markupCount(record, "exclusive") > 0;
+          if (state.filter === "platform") return !hasMarkup;
+          if (state.filter === "markup") return hasMarkup;
+          return true;
+        });
+    }
+
+    function renderList() {
+      document.getElementById("countryMetric").textContent = `${state.records.length} / ${activePlatformCountries().length}`;
+      document.getElementById("searchInput").value = state.search;
+      document.querySelectorAll("[data-filter]").forEach(button => {
+        button.classList.toggle("active", button.dataset.filter === state.filter);
+      });
+
+      const records = filteredRecords();
+      const addable = addableCountries();
+      const addButton = document.getElementById("openAdd");
+      addButton.disabled = addable.length === 0;
+      addButton.title = addable.length === 0 ? "所有可配置国家均已新增" : "";
+
+      const listContent = document.getElementById("listContent");
+      if (!records.length) {
+        listContent.innerHTML = `
+          <div class="empty">
+            <div class="empty-box">
+              <h2>暂无匹配配置</h2>
+              <p>当前筛选条件下没有国家配置。可以调整筛选，或新增一个国家配置。</p>
+              <button class="btn primary" type="button" data-empty-add>新增配置</button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      listContent.innerHTML = `
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:26%;">国家</th>
+                <th style="width:22%;">共享价差策略</th>
+                <th style="width:22%;">独享价差策略</th>
+                <th style="width:18%;">最近更新时间</th>
+                <th style="width:12%;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${records.map(renderListRow).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    function renderListRow(record) {
+      const country = platformCountry(record.code);
+      const shared = strategySummary(record, "shared");
+      const exclusive = strategySummary(record, "exclusive");
+      const down = isDown(record);
+      return `
+        <tr>
+          <td>
+            <div class="country-cell">
+              <strong>${country.name} <span class="mono">${country.code}</span></strong>
+              ${down ? `<span class="tag red">平台已下架</span>` : `<span class="muted">已进入代理商销售范围</span>`}
+            </div>
+          </td>
+          <td><span class="tag ${shared.tone}">${shared.label}</span></td>
+          <td><span class="tag ${exclusive.tone}">${exclusive.label}</span></td>
+          <td class="mono">${record.updatedAt}</td>
+          <td><button class="btn" type="button" data-edit="${record.code}">编辑</button></td>
+        </tr>
+      `;
+    }
+
+    function renderDetail() {
+      const record = currentRecord();
+      if (!record) {
+        state.view = "list";
+        render();
+        return;
+      }
+      const country = platformCountry(record.code);
+      const down = isDown(record);
+      const shared = strategySummary(record, "shared");
+      const exclusive = strategySummary(record, "exclusive");
+
+      document.getElementById("detailTitle").textContent = `${country.name} (${country.code})`;
+      document.getElementById("summaryBar").innerHTML = `
+        <strong>${country.name} <span class="mono">${country.code}</span></strong>
+        ${down ? `<span class="tag red">平台已下架</span>` : `<span class="tag green">平台可售</span>`}
+        <span class="tag ${shared.tone}">共享：${shared.label}</span>
+        <span class="tag ${exclusive.tone}">独享：${exclusive.label}</span>
+        <span class="tag neutral">最近更新：${record.updatedAt}</span>
+      `;
+      document.getElementById("downAlert").classList.toggle("show", down);
+      document.getElementById("dirtyAlert").classList.toggle("show", state.dirty && !down);
+      document.getElementById("invalidAlert").classList.toggle("show", hasInvalid());
+      document.getElementById("clearMarkup").disabled = down;
+      document.getElementById("saveConfig").disabled = down || !state.dirty || hasInvalid();
+
+      document.querySelectorAll("[data-mode]").forEach(button => {
+        button.classList.toggle("active", button.dataset.mode === state.mode);
+      });
+
+      document.getElementById("priceGroups").innerHTML = groups.map(group => `
+        <section class="group">
+          <div class="group-title">
+            <h3>${group.title}</h3>
+            <span class="muted">${group.desc}</span>
+          </div>
+          <div class="table-wrap">
+            <table class="price-table">
+              <thead>
+                <tr>
+                  <th>变量名</th>
+                  <th>平台价格</th>
+                  <th>代理加价</th>
+                  <th>最终售价</th>
+                  <th>预计价差</th>
+                </tr>
+              </thead>
+              <tbody>${group.options.map(option => renderPriceRow(record, group, option, down)).join("")}</tbody>
+            </table>
+          </div>
+        </section>
+      `).join("");
+
+      renderCalculator(down);
+    }
+
+    function renderPriceRow(record, group, option, down) {
+      const platform = platformValue(record.code, group, option, state.mode);
+      const markup = record.markups[state.mode][group.id][option.key];
+      const final = round(platform + markup);
+      const inputId = `markup-${state.mode}-${group.id}-${option.key}`;
+      return `
+        <tr data-row="${group.id}:${option.key}">
+          <td><strong>${option.label}</strong><br><span class="muted mono">${group.id}.${option.key}</span></td>
+          <td class="mono">${formatValue(platform, group.type)}</td>
+          <td>
+            <div class="stepper">
+              <button type="button" data-step="-1" data-group="${group.id}" data-option="${option.key}" ${down ? "disabled" : ""}>-</button>
+              <input id="${inputId}" name="${inputId}" value="${markup.toFixed(2)}" inputmode="decimal" data-markup-input data-group="${group.id}" data-option="${option.key}" aria-label="${option.label} 代理加价" ${down ? "disabled" : ""}>
+              <button type="button" data-step="1" data-group="${group.id}" data-option="${option.key}" ${down ? "disabled" : ""}>+</button>
+            </div>
+            <div class="row-error">代理加价不能小于 0，且必须是数字。</div>
+          </td>
+          <td class="mono">${formatValue(final, group.type)}</td>
+          <td class="mono">${formatMarkup(markup, group.type)}</td>
+        </tr>
+      `;
+    }
+
+    function platformValue(code, group, option, mode) {
+      const modifier = platformCountry(code)?.modifier || 1;
+      return round(option[mode] * modifier);
+    }
+
+    function formatValue(value, type) {
+      if (type === "amount") return money(value);
+      return Number(value).toFixed(2);
+    }
+
+    function formatMarkup(value, type) {
+      if (type === "amount") return `+${money(value)}`;
+      return `+${Number(value).toFixed(2)}`;
+    }
+
+    function renderCalculator(down) {
+      const body = document.getElementById("calculatorBody");
+      body.querySelectorAll("select, button").forEach(element => {
+        element.disabled = down;
+      });
+      document.querySelectorAll("[data-calc-mode]").forEach(button => {
+        button.classList.toggle("active", button.dataset.calcMode === state.calcMode);
+      });
+      fillSelect("calcQuality", groups[0].options, state.calcSelections.quality);
+      fillSelect("calcUdp", groups[1].options, state.calcSelections.udp);
+      fillSelect("calcBandwidth", groups[2].options, state.calcSelections.bandwidth);
+      fillSelect("calcConnection", groups[3].options, state.calcSelections.connection);
+      fillSelect("calcDays", groups[4].options, state.calcSelections.days);
+      fillSelect("calcQty", groups[5].options, state.calcSelections.quantity);
+      calculate();
+    }
+
+    function fillSelect(id, options, value) {
+      const select = document.getElementById(id);
+      select.innerHTML = options.map(option => `<option value="${option.key}">${option.label}</option>`).join("");
+      select.value = value;
+    }
+
+    function getOption(groupId, key) {
+      return groups.find(group => group.id === groupId).options.find(option => option.key === key);
+    }
+
+    function calculate() {
+      const record = currentRecord();
+      if (!record) return;
+      const mode = state.calcMode;
+      const quality = getOption("quality", state.calcSelections.quality);
+      const udp = getOption("udp", state.calcSelections.udp);
+      const bandwidth = getOption("bandwidth", state.calcSelections.bandwidth);
+      const connection = getOption("connection", state.calcSelections.connection);
+      const days = getOption("days", state.calcSelections.days);
+      const qty = getOption("quantity", state.calcSelections.quantity);
+      const baseItems = [["quality", quality], ["udp", udp], ["bandwidth", bandwidth], ["connection", connection]];
+      const platformBase = baseItems.reduce((sum, [groupId, option]) => {
+        const group = groups.find(item => item.id === groupId);
+        return sum + platformValue(record.code, group, option, mode);
+      }, 0);
+      const markupBase = baseItems.reduce((sum, [groupId, option]) => {
+        return sum + record.markups[mode][groupId][option.key];
+      }, 0);
+      const platformCoeff = days[mode] * qty[mode];
+      const markupCoeff = record.markups[mode].days[days.key] + record.markups[mode].quantity[qty.key];
+      const platform = round(platformBase * platformCoeff * 100);
+      const markup = round((markupBase * platformCoeff * 100) + (platformBase * markupCoeff * 100));
+      document.getElementById("calcPlatform").textContent = money(platform);
+      document.getElementById("calcMarkup").textContent = money(markup);
+      document.getElementById("calcFinal").textContent = money(platform + markup);
+      document.getElementById("calcDiff").textContent = money(markup);
+    }
+
+    function addableCountries() {
+      const existing = new Set(state.records.map(record => record.code));
+      return activePlatformCountries().filter(country => !existing.has(country.code));
+    }
+
+    function renderAddModal() {
+      const select = document.getElementById("countrySelect");
+      const countries = addableCountries();
+      select.innerHTML = countries.map(country => `<option value="${country.code}">${country.name} (${country.code})</option>`).join("");
+      document.getElementById("confirmAdd").disabled = countries.length === 0;
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add("show");
+    }
+
+    function closeModals() {
+      document.querySelectorAll(".modal-backdrop").forEach(modal => modal.classList.remove("show"));
+    }
+
+    function openDetail(code) {
+      state.detailCode = code;
+      state.view = "detail";
+      state.mode = "shared";
+      state.calcMode = "shared";
+      render();
+    }
+
+    function leaveDetail(target) {
+      if (state.dirty) {
+        state.pendingLeave = target;
+        openModal("leaveModal");
+        return;
+      }
+      target();
+    }
+
+    function discardChanges() {
+      state.records = JSON.parse(state.savedSnapshot);
+      state.dirty = false;
+    }
+
+    function hasInvalid() {
+      return Boolean(document.querySelector(".has-error"));
+    }
+
+    function validateRows() {
+      document.querySelectorAll("[data-markup-input]").forEach(input => {
+        const value = Number(input.value);
+        input.closest("tr").classList.toggle("has-error", Number.isNaN(value) || value < 0);
+      });
+      document.getElementById("invalidAlert").classList.toggle("show", hasInvalid());
+      document.getElementById("saveConfig").disabled = isDown(currentRecord()) || !state.dirty || hasInvalid();
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById("toast");
+      toast.textContent = text;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2200);
+    }
+
+    document.addEventListener("click", event => {
+      const filterButton = event.target.closest("[data-filter]");
+      if (filterButton) {
+        state.filter = filterButton.dataset.filter;
+        render();
+      }
+
+      const editButton = event.target.closest("[data-edit]");
+      if (editButton) {
+        openDetail(editButton.dataset.edit);
+      }
+
+      if (event.target.id === "openAdd" || event.target.matches("[data-empty-add]")) {
+        renderAddModal();
+        openModal("addModal");
+      }
+
+      if (event.target.id === "confirmAdd") {
+        const code = document.getElementById("countrySelect").value;
+        if (!code) return;
+        const record = createRecord(code, "2026-06-06 20:30", 0, true);
+        state.records.unshift(record);
+        setSnapshot();
+        closeModals();
+        showToast("新增配置成功");
+        openDetail(code);
+      }
+
+      if (event.target.id === "backToList") {
+        leaveDetail(() => {
+          state.view = "list";
+          render();
+        });
+      }
+
+      if (event.target.id === "showBuyerEmpty") {
+        state.view = "buyerEmpty";
+        render();
+      }
+
+      if (event.target.id === "backFromBuyer") {
+        state.view = "list";
+        render();
+      }
+
+      const modeButton = event.target.closest("[data-mode]");
+      if (modeButton) {
+        state.mode = modeButton.dataset.mode;
+        renderDetail();
+      }
+
+      const calcButton = event.target.closest("[data-calc-mode]");
+      if (calcButton) {
+        state.calcMode = calcButton.dataset.calcMode;
+        renderDetail();
+      }
+
+      const stepButton = event.target.closest("[data-step]");
+      if (stepButton) {
+        const record = currentRecord();
+        if (!record || isDown(record)) return;
+        const groupId = stepButton.dataset.group;
+        const optionKey = stepButton.dataset.option;
+        const current = record.markups[state.mode][groupId][optionKey];
+        record.markups[state.mode][groupId][optionKey] = round(Math.max(0, current + Number(stepButton.dataset.step) * 0.01));
+        updateDirty();
+        renderDetail();
+      }
+
+      if (event.target.id === "clearMarkup") {
+        const record = currentRecord();
+        if (!record || isDown(record)) return;
+        ["shared", "exclusive"].forEach(mode => {
+          groups.forEach(group => {
+            group.options.forEach(option => {
+              record.markups[mode][group.id][option.key] = 0;
+            });
+          });
+        });
+        updateDirty();
+        renderDetail();
+        showToast("已清空为平台价售卖，保存后生效");
+      }
+
+      if (event.target.id === "saveConfig") {
+        const record = currentRecord();
+        if (!record || isDown(record) || hasInvalid()) return;
+        record.updatedAt = "2026-06-06 20:40";
+        setSnapshot();
+        renderDetail();
+        showToast("保存成功");
+      }
+
+      if (event.target.id === "confirmLeave") {
+        const target = state.pendingLeave;
+        discardChanges();
+        state.pendingLeave = null;
+        closeModals();
+        if (target) target();
+      }
+
+      if (event.target.matches("[data-close-modal]") || event.target.classList.contains("modal-backdrop")) {
+        closeModals();
+      }
+    });
+
+    document.addEventListener("input", event => {
+      if (event.target.id === "searchInput") {
+        state.search = event.target.value;
+        renderList();
+      }
+
+      if (event.target.matches("[data-markup-input]")) {
+        const record = currentRecord();
+        if (!record || isDown(record)) return;
+        const value = Number(event.target.value);
+        event.target.closest("tr").classList.toggle("has-error", Number.isNaN(value) || value < 0);
+        if (!Number.isNaN(value) && value >= 0) {
+          record.markups[state.mode][event.target.dataset.group][event.target.dataset.option] = round(value);
+          updateDirty();
+          renderDetail();
+        }
+        validateRows();
+      }
+    });
+
+    document.addEventListener("change", event => {
+      const calcMap = {
+        calcQuality: "quality",
+        calcUdp: "udp",
+        calcBandwidth: "bandwidth",
+        calcConnection: "connection",
+        calcDays: "days",
+        calcQty: "quantity"
+      };
+      if (calcMap[event.target.id]) {
+        state.calcSelections[calcMap[event.target.id]] = event.target.value;
+        calculate();
+      }
+    });
+
+    state.records = buildRecords();
+    setSnapshot();
+    render();
+  </script>
+</body>
+</html>

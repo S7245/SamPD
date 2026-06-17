@@ -1,0 +1,2059 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IPWeb 静态代理我的IP中保真原型</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --panel-soft: #fbfdff;
+      --text: #162033;
+      --muted: #667085;
+      --line: #d8e1ed;
+      --primary: #1769aa;
+      --primary-strong: #0f5e9c;
+      --primary-soft: #e7f1fb;
+      --green: #13795b;
+      --green-soft: #e7f6ef;
+      --orange: #a85d00;
+      --orange-soft: #fff3df;
+      --red: #b42318;
+      --red-soft: #fff0ed;
+      --violet: #6941c6;
+      --violet-soft: #f3edff;
+      --shadow: 0 10px 26px rgba(22, 32, 51, 0.08);
+      --shadow-strong: 0 22px 60px rgba(15, 23, 42, 0.22);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background:
+        linear-gradient(180deg, rgba(231, 241, 251, 0.7), rgba(245, 247, 251, 0) 260px),
+        var(--bg);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      padding: 22px 18px;
+      background: #101827;
+      color: #dbe4f0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #2e90fa;
+      color: #fff;
+    }
+
+    .nav-title {
+      margin: 20px 0 8px;
+      color: #8996aa;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      margin-bottom: 4px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      color: #c8d2e0;
+    }
+
+    .nav-item.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .page-title h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .page-title p,
+    .muted {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .toolbar,
+    .button-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .toolbar {
+      justify-content: flex-end;
+    }
+
+    .primary-btn,
+    .secondary-btn,
+    .ghost-btn,
+    .danger-btn {
+      min-height: 40px;
+      border-radius: 7px;
+      padding: 0 14px;
+      font-weight: 800;
+      border: 0;
+      white-space: nowrap;
+    }
+
+    .primary-btn {
+      color: #fff;
+      background: var(--primary);
+      box-shadow: 0 8px 18px rgba(23, 105, 170, 0.18);
+    }
+
+    .primary-btn:hover {
+      background: var(--primary-strong);
+    }
+
+    .secondary-btn {
+      color: var(--text);
+      background: #edf2f7;
+    }
+
+    .ghost-btn {
+      color: var(--primary);
+      background: #fff;
+      border: 1px solid var(--line);
+    }
+
+    .danger-btn {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .panel-body {
+      padding: 16px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .panel-head h2,
+    .panel-head h3 {
+      margin: 0 0 4px;
+      line-height: 1.25;
+    }
+
+    .panel-head h2 {
+      font-size: 20px;
+    }
+
+    .panel-head h3 {
+      font-size: 17px;
+    }
+
+    .status-pill,
+    .badge,
+    .count-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge,
+    .status-pill {
+      color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .status-pill.ok {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .status-pill.warn {
+      color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .status-pill.danger {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .status-pill.violet {
+      color: var(--violet);
+      background: var(--violet-soft);
+    }
+
+    .count-pill {
+      color: var(--text);
+      background: #eef2f7;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat-card {
+      min-height: 86px;
+      text-align: left;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.86);
+      padding: 12px;
+      transition: border-color 0.15s, transform 0.15s, background 0.15s;
+    }
+
+    .stat-card:hover {
+      border-color: #9fc4e7;
+      transform: translateY(-1px);
+    }
+
+    .stat-card.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      box-shadow: inset 0 0 0 1px var(--primary);
+    }
+
+    .stat-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .stat-card strong {
+      display: block;
+      margin: 6px 0 2px;
+      font-size: 25px;
+      line-height: 1;
+    }
+
+    .stat-card small {
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .delivery-card {
+      margin-bottom: 14px;
+      border: 1px solid #bdd8ef;
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(231, 241, 251, 0.92), rgba(255, 255, 255, 0.95)),
+        #fff;
+      overflow: hidden;
+    }
+
+    .delivery-summary {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 13px 14px;
+    }
+
+    .delivery-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .delivery-title strong {
+      white-space: nowrap;
+    }
+
+    .delivery-title span {
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .delivery-metrics {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .delivery-table-wrap {
+      border-top: 1px solid #c9dfef;
+      padding: 12px 14px 14px;
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .delivery-table,
+    .ip-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .delivery-table th,
+    .delivery-table td,
+    .ip-table th,
+    .ip-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .delivery-table th,
+    .ip-table th {
+      color: var(--muted);
+      background: #f8fbff;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .delivery-table tr:last-child td,
+    .ip-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(260px, 1.3fr) repeat(4, minmax(150px, 0.7fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--text);
+      padding: 9px 11px;
+    }
+
+    input[type="checkbox"],
+    input[type="radio"] {
+      width: 16px;
+      min-height: 16px;
+      padding: 0;
+      accent-color: var(--primary);
+    }
+
+    .table-shell {
+      display: grid;
+      gap: 12px;
+    }
+
+    .selection-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 10px 12px;
+    }
+
+    .ip-identity {
+      display: grid;
+      gap: 4px;
+      min-width: 148px;
+    }
+
+    .ip-identity strong,
+    .order-identity strong {
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .mono {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      letter-spacing: 0;
+    }
+
+    .credential {
+      display: grid;
+      gap: 4px;
+      min-width: 180px;
+      font-size: 13px;
+    }
+
+    .credential code {
+      color: #344054;
+      background: #f4f7fb;
+      border: 1px solid #e3eaf3;
+      border-radius: 6px;
+      padding: 3px 6px;
+      width: max-content;
+      max-width: 210px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .region-cell,
+    .renew-cell,
+    .expire-cell {
+      display: grid;
+      gap: 4px;
+      min-width: 132px;
+    }
+
+    .row-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 196px;
+    }
+
+    .text-btn {
+      min-height: 30px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--primary);
+      padding: 0 9px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .empty-state {
+      border: 1px dashed #b8c7d9;
+      border-radius: 8px;
+      background: #fbfdff;
+      padding: 28px;
+      text-align: center;
+    }
+
+    .empty-state h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+    }
+
+    .modal-root[hidden],
+    .drawer-root[hidden],
+    .toast[hidden] {
+      display: none !important;
+    }
+
+    .modal-root,
+    .drawer-root {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(16, 24, 39, 0.42);
+    }
+
+    .modal {
+      position: relative;
+      z-index: 31;
+      width: min(720px, calc(100vw - 32px));
+      margin: 9vh auto 0;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: var(--shadow-strong);
+      overflow: hidden;
+    }
+
+    .modal-head,
+    .drawer-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      border-bottom: 1px solid var(--line);
+      padding: 16px;
+    }
+
+    .modal-head h2,
+    .drawer-head h2 {
+      margin: 0 0 4px;
+      font-size: 20px;
+    }
+
+    .modal-body,
+    .drawer-body {
+      padding: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      border-top: 1px solid var(--line);
+      padding: 14px 16px;
+      background: #f8fbff;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field-full {
+      grid-column: 1 / -1;
+    }
+
+    .radio-card-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 8px 0 12px;
+    }
+
+    .radio-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .radio-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      line-height: 1.45;
+      margin-top: 3px;
+    }
+
+    .drawer-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: 31;
+      width: min(620px, 100vw);
+      height: 100%;
+      overflow: auto;
+      background: #fff;
+      box-shadow: var(--shadow-strong);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .detail-item {
+      min-height: 66px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 10px;
+    }
+
+    .detail-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+
+    .history-list {
+      display: grid;
+      gap: 8px;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+
+    .history-list li {
+      display: grid;
+      grid-template-columns: 138px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px;
+      background: #fbfdff;
+    }
+
+    .notice {
+      border-radius: 7px;
+      padding: 10px 12px;
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .notice.ok {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .notice.warn {
+      color: var(--orange);
+      background: var(--orange-soft);
+    }
+
+    .notice.error {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .renewal-rules {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 50;
+      max-width: 380px;
+      border: 1px solid #a7c7e8;
+      border-radius: 9px;
+      background: #fff;
+      color: var(--text);
+      box-shadow: var(--shadow-strong);
+      padding: 12px 14px;
+      font-weight: 800;
+    }
+
+    @media (max-width: 1280px) {
+      .filters {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .stat-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .main {
+        padding: 16px;
+      }
+
+      .topbar,
+      .panel-head,
+      .delivery-summary,
+      .selection-bar {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+      }
+
+      .filters,
+      .stat-grid,
+      .form-grid,
+      .radio-card-grid,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .ip-table,
+      .delivery-table {
+        display: block;
+        overflow-x: auto;
+      }
+
+      .history-list li {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">IP</span> IPWeb</div>
+      <div class="nav-title">Products</div>
+      <div class="nav-item">Dashboard</div>
+      <div class="nav-item active">Static Residential</div>
+      <div class="nav-item">Rotating Residential</div>
+      <div class="nav-title">Billing</div>
+      <div class="nav-item">Orders</div>
+      <div class="nav-item active">My IPs</div>
+      <div class="nav-item">Subscription</div>
+      <div class="nav-item">Coupons</div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="page-title">
+          <h1>我的IP</h1>
+          <p>管理已交付静态代理资源；交付中订单以动态条提示，成功交付后进入 IP 明细列表。</p>
+        </div>
+        <div class="toolbar">
+          <button class="secondary-btn" data-open-modal="renewalSettings" type="button">续费方式设置</button>
+          <button class="primary-btn" data-open-modal="manualRenew" type="button">续费</button>
+        </div>
+      </div>
+
+      <section class="stat-grid" id="statGrid" aria-label="资源状态概览"></section>
+
+      <section class="delivery-card" id="deliveryCard" aria-label="交付动态"></section>
+
+      <section class="panel">
+        <div class="panel-body">
+          <div class="panel-head">
+            <div>
+              <h2>IP 明细列表</h2>
+              <p class="muted">默认仅展示未释放、已最终交付的静态 IP。交付中订单不会生成明细行。</p>
+            </div>
+            <span class="badge" id="selectedSummary">已选 0 条</span>
+          </div>
+
+          <div class="filters">
+            <label>
+              搜索
+              <input id="searchInput" type="search" placeholder="IP / Host / 账号 / 订单号" autocomplete="off">
+            </label>
+            <label>
+              状态
+              <select id="statusFilter">
+                <option value="all">全部未释放</option>
+                <option value="available">可用</option>
+                <option value="disabled">已停用</option>
+                <option value="expiring">即将到期</option>
+                <option value="retained">已过期保留</option>
+                <option value="renewFailed">续费失败</option>
+                <option value="released">已释放</option>
+              </select>
+            </label>
+            <label>
+              国家/地区
+              <select id="countryFilter">
+                <option value="all">全部</option>
+                <option value="US">US</option>
+                <option value="JP">JP</option>
+                <option value="SG">SG</option>
+                <option value="HK">HK</option>
+              </select>
+            </label>
+            <label>
+              到期时间
+              <select id="expireFilter">
+                <option value="all">全部</option>
+                <option value="7">7 天内到期</option>
+                <option value="15">15 天内到期</option>
+                <option value="30">30 天内到期</option>
+                <option value="retained">保留期内</option>
+              </select>
+            </label>
+            <label>
+              续费方式
+              <select id="renewFilter">
+                <option value="all">全部</option>
+                <option value="manual">手动续费</option>
+                <option value="auto">自动续费</option>
+                <option value="failed">续费失败</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="table-shell">
+            <div class="selection-bar">
+              <strong id="selectionText">当前筛选结果 0 条，已选 0 条</strong>
+              <div class="button-row">
+                <button class="secondary-btn" data-open-modal="export" type="button">导出账号</button>
+                <button class="secondary-btn" data-open-modal="password" type="button">修改密码</button>
+                <button class="secondary-btn" data-bulk-action="disable" type="button">停用</button>
+                <button class="secondary-btn" data-bulk-action="enable" type="button">启用</button>
+              </div>
+            </div>
+            <div id="resourceList"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-root" id="modalRoot" hidden></div>
+  <div class="drawer-root" id="drawerRoot" hidden></div>
+  <div class="toast" id="toast" hidden></div>
+
+  <script>
+    const money = value => `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const statusMeta = {
+      available: { label: "可用", className: "ok" },
+      disabled: { label: "已停用", className: "warn" },
+      expiring: { label: "即将到期", className: "warn" },
+      retained: { label: "已过期保留", className: "danger" },
+      renewFailed: { label: "续费失败", className: "danger" },
+      pendingRenewal: { label: "待支付续费中", className: "violet" },
+      released: { label: "已释放", className: "danger" }
+    };
+
+    const deliveryStatusMeta = {
+      delivering: { label: "交付中", className: "" },
+      partialRefunded: { label: "部分交付，已退款", className: "warn" },
+      failedRefunded: { label: "交付失败，已退款", className: "danger" }
+    };
+
+    const deliveryBatches = [
+      {
+        id: "SP-20260603-0001",
+        status: "delivering",
+        purchased: 10,
+        delivered: 0,
+        delivering: 10,
+        failed: 0,
+        refund: 0,
+        source: "指定 IP",
+        updated: "2 分钟前",
+        summary: "10 条 IP 仍在 5 分钟交付窗口内"
+      },
+      {
+        id: "SP-20260602-0002",
+        status: "partialRefunded",
+        purchased: 20,
+        delivered: 17,
+        delivering: 0,
+        failed: 3,
+        refund: 3.42,
+        source: "随机 IP",
+        updated: "昨天 18:21",
+        summary: "成功交付 17 条，失败 3 条已退回钱包"
+      },
+      {
+        id: "SP-20260601-0003",
+        status: "failedRefunded",
+        purchased: 5,
+        delivered: 0,
+        delivering: 0,
+        failed: 5,
+        refund: 5.8,
+        source: "指定 C 段",
+        updated: "06-01 16:44",
+        summary: "整单交付失败，退款已回到钱包"
+      }
+    ];
+
+    const ips = [
+      {
+        id: "ip-1001",
+        host: "44.100.28.64",
+        port: "8000",
+        account: "u_static_440028",
+        password: "Kp9#s2Lm",
+        country: "US",
+        city: "Ashburn",
+        isp: "Comcast",
+        orderNo: "SP-20260530-0098",
+        sellMode: "独享",
+        udp: "关闭",
+        status: "available",
+        expireAt: "2026-07-03 18:24",
+        expireDays: 30,
+        renewal: "auto",
+        autoDays: 3,
+        purchaseDays: 30,
+        pendingAutoOrder: "SP-20260630-0120",
+        price: 1.12,
+        quality: "标准",
+        source: "指定 IP",
+        history: [
+          ["SP-20260504-0042", "首次购买", "$33.60", "2026-05-04", "2026-06-03"],
+          ["SP-20260530-0098", "自动续费", "$33.60", "2026-06-03", "2026-07-03"]
+        ]
+      },
+      {
+        id: "ip-1002",
+        host: "61.199.55.127",
+        port: "8000",
+        account: "u_static_611995",
+        password: "Mv2!r8Qa",
+        country: "US",
+        city: "Chicago",
+        isp: "AT&T",
+        orderNo: "SP-20260530-0098",
+        sellMode: "独享",
+        udp: "关闭",
+        status: "available",
+        expireAt: "2026-07-03 18:24",
+        expireDays: 30,
+        renewal: "auto",
+        autoDays: 3,
+        purchaseDays: 30,
+        price: 1.12,
+        quality: "标准",
+        source: "指定 IP",
+        history: [
+          ["SP-20260504-0042", "首次购买", "$33.60", "2026-05-04", "2026-06-03"],
+          ["SP-20260530-0098", "自动续费", "$33.60", "2026-06-03", "2026-07-03"]
+        ]
+      },
+      {
+        id: "ip-1003",
+        host: "43.100.45.85",
+        port: "8100",
+        account: "u_static_431004",
+        password: "Tn7@b4Dx",
+        country: "JP",
+        city: "Tokyo",
+        isp: "SoftBank",
+        orderNo: "SP-20260602-0002",
+        sellMode: "共享",
+        udp: "开启",
+        status: "available",
+        expireAt: "2026-07-02 18:21",
+        expireDays: 29,
+        renewal: "manual",
+        autoDays: null,
+        purchaseDays: 30,
+        price: 1.15,
+        quality: "标准",
+        source: "随机 IP",
+        history: [
+          ["SP-20260602-0002", "首次购买", "$34.50", "2026-06-02", "2026-07-02"]
+        ]
+      },
+      {
+        id: "ip-1004",
+        host: "126.199.72.148",
+        port: "8100",
+        account: "u_static_126199",
+        password: "Wp8!g2Lc",
+        country: "JP",
+        city: "Osaka",
+        isp: "KDDI",
+        orderNo: "SP-20260602-0002",
+        sellMode: "共享",
+        udp: "开启",
+        status: "disabled",
+        expireAt: "2026-07-02 18:21",
+        expireDays: 29,
+        renewal: "manual",
+        autoDays: null,
+        purchaseDays: 30,
+        price: 1.15,
+        quality: "标准",
+        source: "随机 IP",
+        history: [
+          ["SP-20260602-0002", "首次购买", "$34.50", "2026-06-02", "2026-07-02"]
+        ]
+      },
+      {
+        id: "ip-1005",
+        host: "138.100.62.106",
+        port: "8200",
+        account: "u_static_138100",
+        password: "Db5$k9Ya",
+        country: "SG",
+        city: "Singapore",
+        isp: "Singtel",
+        orderNo: "SP-20260522-0074",
+        sellMode: "独享",
+        udp: "关闭",
+        status: "expiring",
+        expireAt: "2026-06-09 09:30",
+        expireDays: 6,
+        renewal: "manual",
+        autoDays: null,
+        purchaseDays: 7,
+        price: 1.18,
+        quality: "高端",
+        source: "指定 C 段",
+        history: [
+          ["SP-20260522-0074", "首次购买", "$35.40", "2026-05-22", "2026-06-09"]
+        ]
+      },
+      {
+        id: "ip-1006",
+        host: "47.100.79.127",
+        port: "8300",
+        account: "u_static_471007",
+        password: "Qr6%p1Nm",
+        country: "HK",
+        city: "Hong Kong",
+        isp: "HKT",
+        orderNo: "SP-20260516-0061",
+        sellMode: "独享",
+        udp: "关闭",
+        status: "renewFailed",
+        expireAt: "2026-06-12 11:10",
+        expireDays: 9,
+        renewal: "failed",
+        autoDays: 3,
+        purchaseDays: 30,
+        price: 1.21,
+        quality: "高端",
+        source: "指定 IP",
+        history: [
+          ["SP-20260516-0061", "首次购买", "$36.30", "2026-05-16", "2026-06-12"],
+          ["SP-20260609-0102", "自动续费失败", "$0.00", "2026-06-09", "待处理"]
+        ]
+      },
+      {
+        id: "ip-1007",
+        host: "139.199.89.169",
+        port: "8200",
+        account: "u_static_139199",
+        password: "Ls4&v7Ye",
+        country: "SG",
+        city: "Singapore",
+        isp: "StarHub",
+        orderNo: "SP-20260501-0029",
+        sellMode: "共享",
+        udp: "关闭",
+        status: "retained",
+        expireAt: "2026-06-02 08:00",
+        expireDays: -1,
+        retention: "保留剩余 2 天 13 小时",
+        renewal: "manual",
+        autoDays: null,
+        price: 1.18,
+        quality: "基础",
+        source: "随机 IP",
+        history: [
+          ["SP-20260501-0029", "首次购买", "$8.26", "2026-05-01", "2026-06-02"]
+        ]
+      },
+      {
+        id: "ip-1008",
+        host: "61.23.7.15",
+        port: "8000",
+        account: "u_static_612307",
+        password: "Xy8!n3Br",
+        country: "US",
+        city: "Dallas",
+        isp: "Spectrum",
+        orderNo: "SP-20260528-0086",
+        sellMode: "独享",
+        udp: "开启",
+        status: "pendingRenewal",
+        expireAt: "2026-06-15 21:40",
+        expireDays: 12,
+        renewal: "manual",
+        autoDays: null,
+        price: 1.2,
+        quality: "标准",
+        source: "指定 C 段",
+        history: [
+          ["SP-20260528-0086", "首次购买", "$36.00", "2026-05-28", "2026-06-15"],
+          ["SP-20260603-0108", "手动续费待支付", "$36.00", "待支付", "待支付"]
+        ]
+      },
+      {
+        id: "ip-1009",
+        host: "58.199.106.190",
+        port: "8300",
+        account: "u_static_581991",
+        password: "Released",
+        country: "HK",
+        city: "Hong Kong",
+        isp: "HGC",
+        orderNo: "SP-20260428-0011",
+        sellMode: "独享",
+        udp: "关闭",
+        status: "released",
+        expireAt: "2026-05-31 10:00",
+        expireDays: -3,
+        renewal: "manual",
+        autoDays: null,
+        price: 1.21,
+        quality: "标准",
+        source: "随机 IP",
+        history: [
+          ["SP-20260428-0011", "首次购买", "$36.30", "2026-04-28", "2026-05-31"]
+        ]
+      }
+    ];
+
+    const failedOrderDetails = {
+      "SP-20260602-0002": {
+        title: "部分交付，已退款",
+        rows: [
+          ["61.111.31.71", "$1.12", "钱包", "2026-06-02 18:26"],
+          ["87.210.58.134", "$1.15", "钱包", "2026-06-02 18:26"],
+          ["138.12.38.50", "$1.15", "钱包", "2026-06-02 18:26"]
+        ]
+      },
+      "SP-20260601-0003": {
+        title: "交付失败，已退款",
+        rows: [
+          ["139.111.65.113", "$1.12", "钱包", "2026-06-01 16:49"],
+          ["146.210.92.176", "$1.16", "钱包", "2026-06-01 16:49"],
+          ["43.12.21.29", "$1.19", "钱包", "2026-06-01 16:49"],
+          ["126.111.48.92", "$1.15", "钱包", "2026-06-01 16:49"],
+          ["133.210.75.155", "$1.18", "钱包", "2026-06-01 16:49"]
+        ]
+      }
+    };
+
+    const state = {
+      statusFilter: "all",
+      countryFilter: "all",
+      expireFilter: "all",
+      renewFilter: "all",
+      search: "",
+      deliveryExpanded: false,
+      dismissedDeliveries: new Set(),
+      selectedIds: new Set(["ip-1001", "ip-1003"]),
+      modal: null,
+      drawer: null,
+      activeIpId: "ip-1001",
+      activeOrderNo: "",
+      toastTimer: null
+    };
+
+    function visibleDeliveryBatches() {
+      return deliveryBatches.filter(batch => !state.dismissedDeliveries.has(batch.id));
+    }
+
+    function isDefaultVisible(ip) {
+      return ip.status !== "released";
+    }
+
+    function ipMatchesFilters(ip) {
+      const query = state.search.trim().toLowerCase();
+      const queryMatches = !query || [ip.host, ip.account, ip.orderNo, ip.city, ip.country]
+        .some(value => String(value).toLowerCase().includes(query));
+      const statusMatches = state.statusFilter === "all"
+        ? isDefaultVisible(ip)
+        : ip.status === state.statusFilter;
+      const countryMatches = state.countryFilter === "all" || ip.country === state.countryFilter;
+      const expireMatches =
+        state.expireFilter === "all" ||
+        (state.expireFilter === "retained" && ip.status === "retained") ||
+        (state.expireFilter !== "retained" && ip.expireDays >= 0 && ip.expireDays <= Number(state.expireFilter));
+      const renewMatches =
+        state.renewFilter === "all" ||
+        ip.renewal === state.renewFilter ||
+        (state.renewFilter === "failed" && ip.status === "renewFailed");
+      return queryMatches && statusMatches && countryMatches && expireMatches && renewMatches;
+    }
+
+    function visibleIps() {
+      return ips.filter(ipMatchesFilters);
+    }
+
+    function selectedIps() {
+      return ips.filter(ip => state.selectedIds.has(ip.id));
+    }
+
+    function applyInitialQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      const sourceOrder = params.get("sourceOrder");
+      if (!sourceOrder) return;
+      state.search = sourceOrder;
+      state.drawer = "";
+      state.selectedIds.clear();
+      if (params.get("renewAction") === "manual") {
+        state.renewFilter = "failed";
+        ips
+          .filter(ip => ip.orderNo === sourceOrder && ip.status === "renewFailed")
+          .forEach(ip => state.selectedIds.add(ip.id));
+        state.modal = "manualRenew";
+      }
+    }
+
+    function renewalLabel(ip) {
+      if (ip.status === "renewFailed") return "自动续费失败";
+      if (ip.renewal === "auto") return `自动续费 · 到期前 ${ip.autoDays} 天`;
+      return "手动续费";
+    }
+
+    function renderStatus(status) {
+      const meta = statusMeta[status] || statusMeta.available;
+      return `<span class="status-pill ${meta.className}">${meta.label}</span>`;
+    }
+
+    function renderDeliveryStatus(status) {
+      const meta = deliveryStatusMeta[status];
+      return `<span class="status-pill ${meta.className}">${meta.label}</span>`;
+    }
+
+    function renderStats() {
+      const nonReleased = ips.filter(isDefaultVisible);
+      const stats = [
+        ["all", "全部", nonReleased.length, "默认未释放资源"],
+        ["available", "可用", ips.filter(ip => ip.status === "available").length, "可直接连接"],
+        ["disabled", "已停用", ips.filter(ip => ip.status === "disabled").length, "租期仍倒计时"],
+        ["expiring", "即将到期", ips.filter(ip => ip.status === "expiring").length, "30 天内到期"],
+        ["retained", "已过期", ips.filter(ip => ip.status === "retained").length, "3 天保留期内"]
+      ];
+      document.getElementById("statGrid").innerHTML = stats.map(([filter, label, value, note]) => `
+        <button class="stat-card ${state.statusFilter === filter ? "active" : ""}" data-stat-filter="${filter}" type="button">
+          <span>${label}</span>
+          <strong>${value}</strong>
+          <small>${note}</small>
+        </button>
+      `).join("");
+    }
+
+    function renderDelivery() {
+      const batches = visibleDeliveryBatches();
+      const el = document.getElementById("deliveryCard");
+      if (!batches.length) {
+        el.hidden = true;
+        return;
+      }
+      el.hidden = false;
+      const delivering = batches.reduce((sum, batch) => sum + batch.delivering, 0);
+      const failed = batches.reduce((sum, batch) => sum + batch.failed, 0);
+      const refund = batches.reduce((sum, batch) => sum + batch.refund, 0);
+      const latest = batches[0];
+      el.innerHTML = `
+        <div class="delivery-summary">
+          <div>
+            <div class="delivery-title">
+              <strong>交付动态</strong>
+              <span>${batches.length} 个订单需关注 · 最近 ${latest.id} · ${latest.summary}</span>
+            </div>
+            <div class="delivery-metrics">
+              <span class="count-pill">交付中 ${delivering} 条</span>
+              <span class="count-pill">失败 ${failed} 条</span>
+              <span class="count-pill">已退 ${money(refund)}</span>
+            </div>
+          </div>
+          <div class="button-row">
+            <button class="ghost-btn" data-delivery-toggle type="button">${state.deliveryExpanded ? "收起" : "展开"}</button>
+            <button class="secondary-btn" data-dismiss-refunds type="button">关闭已退款摘要</button>
+          </div>
+        </div>
+        ${state.deliveryExpanded ? `
+          <div class="delivery-table-wrap">
+            <table class="delivery-table">
+              <thead>
+                <tr>
+                  <th>订单号</th>
+                  <th>交付状态</th>
+                  <th>购买</th>
+                  <th>已交付</th>
+                  <th>交付中</th>
+                  <th>失败</th>
+                  <th>退款总金额</th>
+                  <th style="text-align:right;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${batches.map(batch => `
+                  <tr>
+                    <td>
+                      <div class="order-identity">
+                        <strong>${batch.id}</strong>
+                        <span class="muted">${batch.source} · ${batch.updated}</span>
+                      </div>
+                    </td>
+                    <td>${renderDeliveryStatus(batch.status)}</td>
+                    <td>${batch.purchased}</td>
+                    <td>${batch.delivered}</td>
+                    <td>${batch.delivering}</td>
+                    <td>${batch.failed}</td>
+                    <td>${batch.refund ? money(batch.refund) : "-"}</td>
+                    <td>
+                      <div class="row-actions">
+                        <button class="text-btn" data-order-detail="${batch.id}" type="button">查看订单详情</button>
+                      </div>
+                    </td>
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          </div>
+        ` : ""}
+      `;
+    }
+
+    function renderFilters() {
+      document.getElementById("searchInput").value = state.search;
+      document.getElementById("statusFilter").value = state.statusFilter;
+      document.getElementById("countryFilter").value = state.countryFilter;
+      document.getElementById("expireFilter").value = state.expireFilter;
+      document.getElementById("renewFilter").value = state.renewFilter;
+    }
+
+    function renderIpTable(rows) {
+      if (!rows.length) {
+        const normalizedSearch = state.search.trim().toUpperCase();
+        if (normalizedSearch.includes("SP-20260603-0001")) {
+          return `
+            <div class="empty-state">
+              <h3>订单仍在交付中</h3>
+              <p class="muted">订单 SP-20260603-0001 购买 10 条 IP，目前仍在 5 分钟交付窗口内。交付完成前不会生成 IP 明细行。</p>
+              <div class="button-row" style="justify-content:center; margin-top:14px;">
+                <button class="primary-btn" data-delivery-toggle type="button">查看交付动态</button>
+              </div>
+            </div>
+          `;
+        }
+        if (normalizedSearch.includes("SP-20260601-0003") || state.statusFilter === "released") {
+          return `
+            <div class="empty-state">
+              <h3>未找到该订单可用 IP</h3>
+              <p class="muted">订单 SP-20260601-0003 已交付失败，5 条 IP 均未成功交付，退款 ${money(5.8)} 已退回钱包。</p>
+              <div class="button-row" style="justify-content:center; margin-top:14px;">
+                <button class="primary-btn" data-order-detail="SP-20260601-0003" type="button">查看订单详情</button>
+              </div>
+            </div>
+          `;
+        }
+        return `<div class="empty-state"><h3>没有符合筛选条件的 IP</h3><p class="muted">可以调整状态、地区、续费方式或搜索条件。</p></div>`;
+      }
+
+      const allVisibleSelected = rows.every(row => state.selectedIds.has(row.id));
+      return `
+        <table class="ip-table">
+          <thead>
+            <tr>
+              <th><input data-select-all type="checkbox" ${allVisibleSelected ? "checked" : ""} aria-label="选择当前结果"></th>
+              <th>IP / Host</th>
+              <th>proxy_port</th>
+              <th>账号 / 密码</th>
+              <th>地区</th>
+              <th>订单</th>
+              <th>状态</th>
+              <th>到期 / 续费</th>
+              <th style="text-align:right;">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(ip => `
+              <tr>
+                <td><input data-select-ip="${ip.id}" type="checkbox" ${state.selectedIds.has(ip.id) ? "checked" : ""} aria-label="选择 ${ip.host}"></td>
+                <td>
+                  <div class="ip-identity">
+                    <strong class="mono">${ip.host}</strong>
+                    <span class="muted">${ip.sellMode} · ${ip.quality} · ${ip.source}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="region-cell">
+                    <strong>${ip.port}</strong>
+                    <span class="muted">UDP ${ip.udp}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="credential">
+                    <code>${ip.account}</code>
+                    <code>${ip.password}</code>
+                  </div>
+                </td>
+                <td>
+                  <div class="region-cell">
+                    <strong>${ip.country} · ${ip.city}</strong>
+                    <span class="muted">${ip.isp}</span>
+                  </div>
+                </td>
+                <td><button class="text-btn" data-order-detail="${ip.orderNo}" type="button">${ip.orderNo}</button></td>
+                <td>${renderStatus(ip.status)}</td>
+                <td>
+                  <div class="expire-cell">
+                    <strong>${ip.status === "retained" ? ip.retention : ip.expireAt}</strong>
+                    <span class="muted">${renewalLabel(ip)}</span>
+                  </div>
+                </td>
+                <td>
+                  <div class="row-actions">
+                    <button class="text-btn" data-copy-ip="${ip.id}" type="button">复制</button>
+                    <button class="text-btn" data-open-modal="manualRenew" data-focus-ip="${ip.id}" type="button">续费</button>
+                    <button class="text-btn" data-ip-detail="${ip.id}" type="button">历史订单</button>
+                  </div>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderResourceList() {
+      const rows = visibleIps();
+      const selectedCount = selectedIps().length;
+      document.getElementById("selectedSummary").textContent = `已选 ${selectedCount} 条`;
+      document.getElementById("selectionText").textContent = `当前筛选结果 ${rows.length} 条，已选 ${selectedCount} 条`;
+      document.getElementById("resourceList").innerHTML = renderIpTable(rows);
+    }
+
+    function modalSelectedText() {
+      const count = selectedIps().length;
+      return count > 0 ? `已选择 ${count} 条 IP` : "未选择 IP，将以当前筛选结果为范围";
+    }
+
+    function renewalEstimate(count, durationDays) {
+      return count * Number(durationDays) * 1.18;
+    }
+
+    function manualRenewalOrderUrl(rows, durationDays) {
+      const sourceOrder = rows[0]?.orderNo || "";
+      const params = new URLSearchParams({
+        manualRenewal: "1",
+        sourceOrder,
+        ipCount: String(rows.length),
+        duration: String(durationDays),
+        amount: renewalEstimate(rows.length, durationDays).toFixed(2),
+        affectedIps: rows.map(ip => ip.host).join(",")
+      });
+      return `static-residential-post-continue-flow.html?${params.toString()}`;
+    }
+
+    function renewalRows() {
+      const rows = selectedOrVisibleIps();
+      const configurable = rows.filter(ip => !["retained", "released"].includes(ip.status));
+      const skipped = rows.filter(ip => ["retained", "released"].includes(ip.status));
+      return { rows, configurable, skipped };
+    }
+
+    function allowedLeadDays(ip) {
+      return (ip.purchaseDays || 30) <= 7 ? [1, 3] : [1, 3, 7, 15];
+    }
+
+    function sharedLeadDays(rows) {
+      const options = [1, 3, 7, 15];
+      if (!rows.length) return options;
+      return options.filter(day => rows.every(ip => allowedLeadDays(ip).includes(day)));
+    }
+
+    function renewalSettingsContext() {
+      const { rows, configurable, skipped } = renewalRows();
+      const autoLike = configurable.filter(ip => ip.renewal === "auto" || ip.renewal === "failed");
+      const leadDays = sharedLeadDays(configurable);
+      return {
+        rows,
+        configurable,
+        skipped,
+        leadDays,
+        defaultLeadDay: leadDays.includes(3) ? 3 : leadDays[0],
+        defaultMode: configurable.length && autoLike.length === configurable.length ? "auto" : "manual"
+      };
+    }
+
+    function updateRenewalSettingsVisibility() {
+      const mode = document.querySelector("input[name='renewMode']:checked")?.value;
+      const autoConfig = document.querySelector("[data-auto-renew-config]");
+      if (!autoConfig) return;
+      const showAutoConfig = mode === "auto";
+      autoConfig.hidden = !showAutoConfig;
+      autoConfig.setAttribute("aria-hidden", String(!showAutoConfig));
+    }
+
+    function renderModal() {
+      const root = document.getElementById("modalRoot");
+      if (!state.modal) {
+        root.hidden = true;
+        root.innerHTML = "";
+        return;
+      }
+      root.hidden = false;
+      let content = "";
+      if (state.modal === "export") {
+        content = `
+          <div class="modal">
+            <div class="modal-head">
+              <div>
+                <h2>导出账号</h2>
+                <p class="muted">${modalSelectedText()}。导出包含可见密码，需校验登录密码并写入审计日志。</p>
+              </div>
+              <button class="text-btn" data-close-modal type="button">关闭</button>
+            </div>
+            <div class="modal-body">
+              <div class="notice warn">导出文件会包含 IP、proxy_port、账号和密码。请确认接收环境安全。</div>
+              <div class="form-grid" style="margin-top:12px;">
+                <label>
+                  导出格式
+                  <select id="exportFormat">
+                    <option value="csv">CSV</option>
+                    <option value="txt">TXT · host:port:username:password</option>
+                  </select>
+                </label>
+                <label>
+                  登录密码
+                  <input id="loginPassword" type="password" placeholder="输入当前登录密码">
+                </label>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button class="secondary-btn" data-close-modal type="button">取消</button>
+              <button class="primary-btn" data-confirm-export type="button">确认导出</button>
+            </div>
+          </div>
+        `;
+      }
+      if (state.modal === "password") {
+        content = `
+          <div class="modal">
+            <div class="modal-head">
+              <div>
+                <h2>修改密码</h2>
+                <p class="muted">${modalSelectedText()}。修改后旧密码立即失效，新连接必须使用新密码。</p>
+              </div>
+              <button class="text-btn" data-close-modal type="button">关闭</button>
+            </div>
+            <div class="modal-body">
+              <div class="radio-card-grid">
+                <label class="radio-card">
+                  <input name="passwordMode" value="uniform" type="radio" checked>
+                  <strong>统一新密码<span>所有选中账号使用同一个新密码。</span></strong>
+                </label>
+                <label class="radio-card">
+                  <input name="passwordMode" value="random" type="radio">
+                  <strong>随机生成<span>每条 IP 生成不同密码，结果可导出。</span></strong>
+                </label>
+              </div>
+              <label>
+                新密码
+                <input id="newPassword" value="New#Proxy2026">
+              </label>
+            </div>
+            <div class="modal-actions">
+              <button class="secondary-btn" data-close-modal type="button">取消</button>
+              <button class="primary-btn" data-confirm-password type="button">确认修改</button>
+            </div>
+          </div>
+        `;
+      }
+      if (state.modal === "renewalSettings") {
+        const renewalContext = renewalSettingsContext();
+        const canSaveRenewal = renewalContext.configurable.length > 0;
+        content = `
+          <div class="modal">
+            <div class="modal-head">
+              <div>
+                <h2>续费方式设置</h2>
+                <p class="muted">${modalSelectedText()}。选择续费方式后只保存配置。</p>
+              </div>
+              <button class="text-btn" data-close-modal type="button">关闭</button>
+            </div>
+            <div class="modal-body">
+              <div class="radio-card-grid">
+                <label class="radio-card">
+                  <input name="renewMode" value="manual" type="radio" data-renew-mode ${renewalContext.defaultMode === "manual" ? "checked" : ""}>
+                  <strong>手动续费<span>到期前由用户主动发起续费。</span></strong>
+                </label>
+                <label class="radio-card">
+                  <input name="renewMode" value="auto" type="radio" data-renew-mode ${renewalContext.defaultMode === "auto" ? "checked" : ""}>
+                  <strong>自动续费<span>按设置自动续费。</span></strong>
+                </label>
+              </div>
+              <div class="renewal-rules auto-renew-rule" data-auto-renew-config aria-hidden="${renewalContext.defaultMode === "auto" ? "false" : "true"}" ${renewalContext.defaultMode === "auto" ? "" : "hidden"}>
+                <label>
+                  到期前 A 天续费
+                  <select id="autoRenewDays">
+                    ${renewalContext.leadDays.map(day => `<option value="${day}" ${day === renewalContext.defaultLeadDay ? "selected" : ""}>${day} 天</option>`).join("")}
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button class="secondary-btn" data-close-modal type="button">取消</button>
+              <button class="primary-btn" data-confirm-renewal-settings type="button" ${canSaveRenewal ? "" : "disabled"}>保存设置</button>
+            </div>
+          </div>
+        `;
+      }
+      if (state.modal === "manualRenew") {
+        const count = selectedIps().length || visibleIps().filter(ip => ip.status !== "released").length;
+        const estimate = renewalEstimate(count, 30);
+        content = `
+          <div class="modal">
+            <div class="modal-head">
+              <div>
+                <h2>手动续费</h2>
+                <p class="muted">${modalSelectedText()}。手动续费会创建独立待支付续费订单。</p>
+              </div>
+              <button class="text-btn" data-close-modal type="button">关闭</button>
+            </div>
+            <div class="modal-body">
+              <div class="form-grid">
+                <label>
+                  续费周期
+                  <select id="renewDuration">
+                    <option value="30">30 天</option>
+                    <option value="60">60 天</option>
+                    <option value="90">90 天</option>
+                    <option value="365">1 年</option>
+                  </select>
+                </label>
+                <label>
+                  预计金额
+                  <input id="manualRenewEstimate" value="${money(estimate)}" readonly>
+                </label>
+              </div>
+              <div class="notice ok" style="margin-top:12px;">同一当前有效订单号下的多条 IP 可创建一笔续费订单；跨订单号需要拆分。</div>
+            </div>
+            <div class="modal-actions">
+              <button class="secondary-btn" data-close-modal type="button">取消</button>
+              <button class="primary-btn" data-confirm-manual-renew type="button">创建续费订单</button>
+            </div>
+          </div>
+        `;
+      }
+
+      root.innerHTML = `<div class="overlay" data-close-modal></div>${content}`;
+    }
+
+    function renderDrawer() {
+      const root = document.getElementById("drawerRoot");
+      if (!state.drawer) {
+        root.hidden = true;
+        root.innerHTML = "";
+        return;
+      }
+      root.hidden = false;
+      if (state.drawer === "ip") {
+        const ip = ips.find(item => item.id === state.activeIpId);
+        root.innerHTML = `
+          <div class="overlay" data-close-drawer></div>
+          <aside class="drawer-panel">
+            <div class="drawer-head">
+              <div>
+                <h2>${ip.host}</h2>
+                <p class="muted">${ip.orderNo} · ${ip.country} ${ip.city} · proxy_port ${ip.port}</p>
+              </div>
+              <button class="text-btn" data-close-drawer type="button">关闭</button>
+            </div>
+            <div class="drawer-body">
+              <div class="detail-grid">
+                ${[
+                  ["账号", ip.account],
+                  ["密码", ip.password],
+                  ["状态", statusMeta[ip.status].label],
+                  ["续费方式", renewalLabel(ip)],
+                  ["售卖模式", ip.sellMode],
+                  ["UDP", ip.udp],
+                  ["IP 质量", ip.quality],
+                  ["到期时间", ip.status === "retained" ? ip.retention : ip.expireAt]
+                ].map(([label, value]) => `<div class="detail-item"><span>${label}</span><strong>${value}</strong></div>`).join("")}
+              </div>
+              <div class="panel-head">
+                <div>
+                  <h3>历史订单</h3>
+                  <p class="muted">追踪该 IP 从首次购买到历次续费的权益变化。</p>
+                </div>
+              </div>
+              <ul class="history-list">
+                ${ip.history.map(row => `
+                  <li>
+                    <strong>${row[0]}</strong>
+                    <span>${row[1]} · ${row[3]} 至 ${row[4]}</span>
+                    <button class="text-btn" data-order-detail="${row[0]}" type="button">${row[2]}</button>
+                  </li>
+                `).join("")}
+              </ul>
+            </div>
+          </aside>
+        `;
+      }
+      if (state.drawer === "order") {
+        const batch = deliveryBatches.find(item => item.id === state.activeOrderNo);
+        const details = failedOrderDetails[state.activeOrderNo];
+        root.innerHTML = `
+          <div class="overlay" data-close-drawer></div>
+          <aside class="drawer-panel">
+            <div class="drawer-head">
+              <div>
+                <h2>${state.activeOrderNo}</h2>
+                <p class="muted">${batch ? deliveryStatusMeta[batch.status].label : "订单详情"} · 订单交易状态保持已支付</p>
+              </div>
+              <button class="text-btn" data-close-drawer type="button">关闭</button>
+            </div>
+            <div class="drawer-body">
+              ${batch ? `
+                <div class="detail-grid">
+                  ${[
+                    ["购买数量", `${batch.purchased} 条`],
+                    ["已交付", `${batch.delivered} 条`],
+                    ["交付中", `${batch.delivering} 条`],
+                    ["失败数量", `${batch.failed} 条`],
+                    ["退款总金额", money(batch.refund)],
+                    ["退款去向", "钱包"]
+                  ].map(([label, value]) => `<div class="detail-item"><span>${label}</span><strong>${value}</strong></div>`).join("")}
+                </div>
+              ` : `<div class="notice warn">该订单详情需从我的订单模块查看。</div>`}
+              ${details ? `
+                <div class="panel-head">
+                  <div>
+                    <h3>失败 IP 与退款明细</h3>
+                    <p class="muted">此信息属于订单详情；我的IP列表只保留交付摘要。</p>
+                  </div>
+                  <span class="status-pill danger">${details.title}</span>
+                </div>
+                <table class="delivery-table">
+                  <thead>
+                    <tr>
+                      <th>失败 IP</th>
+                      <th>退款金额</th>
+                      <th>退款去向</th>
+                      <th>入账时间</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${details.rows.map(row => `
+                      <tr>
+                        <td class="mono">${row[0]}</td>
+                        <td>${row[1]}</td>
+                        <td>${row[2]}</td>
+                        <td>${row[3]}</td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              ` : `<div class="notice ok">当前订单暂无失败 IP 明细。</div>`}
+            </div>
+          </aside>
+        `;
+      }
+    }
+
+    function renderToast(message) {
+      const toast = document.getElementById("toast");
+      clearTimeout(state.toastTimer);
+      toast.textContent = message;
+      toast.hidden = false;
+      state.toastTimer = setTimeout(() => {
+        toast.hidden = true;
+      }, 2600);
+    }
+
+    function render() {
+      renderStats();
+      renderDelivery();
+      renderFilters();
+      renderResourceList();
+      renderModal();
+      renderDrawer();
+    }
+
+    function selectedOrVisibleIps() {
+      const selected = selectedIps();
+      return selected.length ? selected : visibleIps().filter(ip => isDefaultVisible(ip));
+    }
+
+    function bulkSetStatus(nextStatus) {
+      const rows = selectedOrVisibleIps();
+      let changed = 0;
+      let skipped = 0;
+      rows.forEach(ip => {
+        if (ip.status === "retained" || ip.status === "released") {
+          skipped += 1;
+          return;
+        }
+        if (nextStatus === "disabled" && ip.status !== "disabled") {
+          ip.status = "disabled";
+          changed += 1;
+          return;
+        }
+        if (nextStatus === "available" && ip.status === "disabled") {
+          ip.status = "available";
+          changed += 1;
+          return;
+        }
+        skipped += 1;
+      });
+      renderToast(`操作完成：成功 ${changed} 条，跳过 ${skipped} 条。`);
+      render();
+    }
+
+    function generatedPassword(index) {
+      return `Px${Math.floor(1000 + Math.random() * 9000)}#${index}Q`;
+    }
+
+    document.addEventListener("input", event => {
+      if (event.target.id === "searchInput") {
+        state.search = event.target.value;
+        render();
+      }
+    });
+
+    document.addEventListener("change", event => {
+      if (event.target.dataset.renewMode !== undefined) {
+        updateRenewalSettingsVisibility();
+        return;
+      }
+      if (event.target.id === "renewDuration") {
+        const count = selectedIps().length || visibleIps().filter(ip => ip.status !== "released").length;
+        document.getElementById("manualRenewEstimate").value = money(renewalEstimate(count, Number(event.target.value)));
+        return;
+      }
+      if (event.target.id === "statusFilter") state.statusFilter = event.target.value;
+      if (event.target.id === "countryFilter") state.countryFilter = event.target.value;
+      if (event.target.id === "expireFilter") state.expireFilter = event.target.value;
+      if (event.target.id === "renewFilter") state.renewFilter = event.target.value;
+      if (event.target.dataset.selectIp) {
+        if (event.target.checked) state.selectedIds.add(event.target.dataset.selectIp);
+        else state.selectedIds.delete(event.target.dataset.selectIp);
+      }
+      if (event.target.dataset.selectAll !== undefined) {
+        visibleIps().forEach(ip => {
+          if (event.target.checked) state.selectedIds.add(ip.id);
+          else state.selectedIds.delete(ip.id);
+        });
+      }
+      render();
+    });
+
+    document.addEventListener("click", event => {
+      const statFilter = event.target.closest("[data-stat-filter]");
+      if (statFilter) {
+        state.statusFilter = statFilter.dataset.statFilter;
+        render();
+        return;
+      }
+
+      const deliveryToggle = event.target.closest("[data-delivery-toggle]");
+      if (deliveryToggle) {
+        state.deliveryExpanded = !state.deliveryExpanded;
+        render();
+        return;
+      }
+
+      const dismissRefunds = event.target.closest("[data-dismiss-refunds]");
+      if (dismissRefunds) {
+        deliveryBatches
+          .filter(batch => batch.status !== "delivering")
+          .forEach(batch => state.dismissedDeliveries.add(batch.id));
+        renderToast("已关闭近期已退款交付摘要，交付中订单仍保留。");
+        render();
+        return;
+      }
+
+      const openModal = event.target.closest("[data-open-modal]");
+      if (openModal) {
+        const focusIp = openModal.dataset.focusIp;
+        if (focusIp) {
+          state.selectedIds = new Set([focusIp]);
+        }
+        state.modal = openModal.dataset.openModal;
+        render();
+        return;
+      }
+
+      const closeModal = event.target.closest("[data-close-modal]");
+      if (closeModal) {
+        state.modal = null;
+        render();
+        return;
+      }
+
+      const closeDrawer = event.target.closest("[data-close-drawer]");
+      if (closeDrawer) {
+        state.drawer = null;
+        render();
+        return;
+      }
+
+      const bulkAction = event.target.closest("[data-bulk-action]");
+      if (bulkAction) {
+        bulkSetStatus(bulkAction.dataset.bulkAction === "disable" ? "disabled" : "available");
+        return;
+      }
+
+      const copyButton = event.target.closest("[data-copy-ip]");
+      if (copyButton) {
+        const ip = ips.find(item => item.id === copyButton.dataset.copyIp);
+        const line = `${ip.host}:${ip.port}:${ip.account}:${ip.password}`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(line).catch(() => {});
+        }
+        renderToast(`已复制 ${ip.host} 代理账号行。`);
+        return;
+      }
+
+      const ipDetail = event.target.closest("[data-ip-detail]");
+      if (ipDetail) {
+        state.activeIpId = ipDetail.dataset.ipDetail;
+        state.drawer = "ip";
+        render();
+        return;
+      }
+
+      const orderDetail = event.target.closest("[data-order-detail]");
+      if (orderDetail) {
+        state.activeOrderNo = orderDetail.dataset.orderDetail;
+        state.drawer = "order";
+        render();
+        return;
+      }
+
+      if (event.target.closest("[data-confirm-export]")) {
+        const password = document.getElementById("loginPassword").value.trim();
+        const format = document.getElementById("exportFormat").value.toUpperCase();
+        if (!password) {
+          renderToast("请输入登录密码后再导出。");
+          return;
+        }
+        state.modal = null;
+        renderToast(`已校验登录密码，${format} 导出请求已记录审计日志。`);
+        render();
+        return;
+      }
+
+      if (event.target.closest("[data-confirm-password]")) {
+        const mode = document.querySelector("input[name='passwordMode']:checked").value;
+        const newPassword = document.getElementById("newPassword").value.trim();
+        const rows = selectedOrVisibleIps().filter(ip => !["retained", "released"].includes(ip.status));
+        if (mode === "uniform" && !newPassword) {
+          renderToast("请输入新密码。");
+          return;
+        }
+        rows.forEach((ip, index) => {
+          ip.password = mode === "random" ? generatedPassword(index + 1) : newPassword;
+        });
+        state.modal = null;
+        renderToast(`已修改 ${rows.length} 条 IP 密码，操作日志已记录。`);
+        render();
+        return;
+      }
+
+      if (event.target.closest("[data-confirm-renewal-settings]")) {
+        const mode = document.querySelector("input[name='renewMode']:checked").value;
+        const context = renewalSettingsContext();
+        const rows = context.configurable;
+        if (!rows.length) {
+          renderToast("当前没有可设置续费方式的 IP。");
+          return;
+        }
+        const days = mode === "auto" ? Number(document.getElementById("autoRenewDays").value) : null;
+        let cancelledPendingAutoCount = 0;
+        rows.forEach(ip => {
+          ip.renewal = mode;
+          ip.autoDays = mode === "auto" ? days : null;
+          if (mode === "manual" && ip.pendingAutoOrder) {
+            ip.pendingAutoOrder = "";
+            cancelledPendingAutoCount += 1;
+          }
+          if (ip.status === "renewFailed" && mode === "manual") {
+            ip.status = "available";
+          }
+        });
+        state.modal = null;
+        const skippedText = context.skipped.length ? `，跳过 ${context.skipped.length} 条不可配置 IP` : "";
+        const cancelledText = cancelledPendingAutoCount ? `，已取消 ${cancelledPendingAutoCount} 笔待支付自动续费订单` : "";
+        renderToast(`已为 ${rows.length} 条 IP 保存${mode === "auto" ? `自动续费，到期前 ${days} 天` : "手动续费"}${cancelledText}${skippedText}。`);
+        render();
+        return;
+      }
+
+      if (event.target.closest("[data-confirm-manual-renew]")) {
+        const rows = selectedOrVisibleIps().filter(ip => ip.status !== "released");
+        const orderNos = new Set(rows.map(ip => ip.orderNo));
+        if (!rows.length) {
+          renderToast("当前没有可续费的 IP。");
+          return;
+        }
+        if (orderNos.size > 1) {
+          renderToast("跨当前有效订单号的 IP 需要拆分创建续费订单。");
+          return;
+        }
+        const duration = Number(document.getElementById("renewDuration").value);
+        window.location.href = manualRenewalOrderUrl(rows, duration);
+      }
+    });
+
+    applyInitialQueryParams();
+    render();
+  </script>
+</body>
+</html>
