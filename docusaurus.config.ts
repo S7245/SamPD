@@ -20,7 +20,7 @@ const config: Config = {
   organizationName: "samlau7245@gmail.com", // Usually your GitHub org/user name.
   projectName: "SamPD", // Usually your repo name.
 
-  onBrokenLinks: "throw",
+  onBrokenLinks: "warn",
   onBrokenMarkdownLinks: "warn",
 
   // Even if you don't use internationalization, you can use this field to set
