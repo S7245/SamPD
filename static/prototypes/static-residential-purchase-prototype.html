@@ -1,0 +1,3657 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IPWeb 静态住宅代理购买原型</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --bg: #f6f8fb;
+      --panel: #ffffff;
+      --text: #162033;
+      --muted: #697386;
+      --line: #d9e0ea;
+      --primary: #1769aa;
+      --primary-soft: #e7f1fb;
+      --green: #13795b;
+      --green-soft: #e7f6ef;
+      --orange: #a85d00;
+      --orange-soft: #fff3df;
+      --red: #b42318;
+      --red-soft: #fff0ed;
+      --shadow: 0 12px 30px rgba(22, 32, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      background: #101827;
+      color: #dbe4f0;
+      padding: 22px 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      font-weight: 800;
+      font-size: 22px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #2e90fa;
+      color: #fff;
+    }
+
+    .nav-title {
+      margin: 20px 0 8px;
+      color: #8996aa;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      padding: 10px 12px;
+      border-radius: 7px;
+      color: #c8d2e0;
+      margin-bottom: 4px;
+    }
+
+    .nav-item.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .main {
+      padding: 24px;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .page-title h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .page-title p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--primary-soft);
+      color: var(--primary);
+      white-space: nowrap;
+    }
+
+    .prototype-badge {
+      background: #eef3f8;
+      color: #6b778b;
+      border: 1px solid #d7e0ea;
+      font-weight: 600;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 20px;
+      align-items: start;
+    }
+
+    .stack {
+      display: grid;
+      gap: 16px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .section h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 4px 0 0;
+    }
+
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .tile {
+      min-height: 86px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.15s;
+    }
+
+    .tile:hover {
+      border-color: #9fc4e7;
+      transform: translateY(-1px);
+    }
+
+    .tile.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      box-shadow: inset 0 0 0 1px var(--primary);
+    }
+
+    .tile-title {
+      font-weight: 800;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .tile-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .base-param-stack {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    label {
+      display: grid;
+      gap: 7px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+
+    select,
+    input[type="number"],
+    input[type="text"] {
+      width: 100%;
+      height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px 10px;
+      background: #fff;
+      color: var(--text);
+    }
+
+    select:focus,
+    input:focus {
+      outline: 2px solid rgba(23, 105, 170, 0.18);
+      border-color: var(--primary);
+    }
+
+    .countries {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .selected-alert {
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: #e3f7fb;
+      color: #0e6774;
+      margin: 10px 0;
+    }
+
+    .selected-alert-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .selected-chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .selected-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #b8e6ef;
+      color: #154b5a;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .selected-chip button {
+      border: 0;
+      background: transparent;
+      color: inherit;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .selected-icon {
+      width: 22px;
+      height: 22px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      font-size: 13px;
+    }
+
+    .country {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+      display: grid;
+      gap: 9px;
+      min-height: 128px;
+    }
+
+    .country.scope-random {
+      background: linear-gradient(180deg, #f8fbff 0%, #eef6ff 100%);
+      border-color: #b9d6f2;
+    }
+
+    .country.city-card {
+      min-height: 136px;
+    }
+
+    .allocation-toolbar {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .allocation-dimension-row {
+      margin-bottom: 0;
+    }
+
+    .allocation-controls {
+      display: grid;
+      gap: 10px;
+    }
+
+    .allocation-subhead {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      color: #34506e;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .city-country-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 220px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .city-hot-countries {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .country-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      box-shadow: 0 12px 28px rgba(34, 52, 77, 0.10);
+    }
+
+    .country-panel-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      color: #34506e;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .country-panel-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .country-panel .pill {
+      text-align: left;
+    }
+
+    .scope-type {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      width: max-content;
+      min-height: 24px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #edf5ff;
+      color: #1c5d91;
+      font-size: 11px;
+      font-weight: 850;
+    }
+
+    .allocation-card-input {
+      display: grid;
+      gap: 5px;
+    }
+
+    .allocation-card-input input {
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .card-error {
+      color: var(--red);
+      font-size: 12px;
+      line-height: 1.35;
+      min-height: 16px;
+    }
+
+    .country-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .country-name {
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    .available {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 3px;
+    }
+
+    .pill-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .filter-row .pill-row {
+      margin-bottom: 0;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .country-search {
+      width: 220px;
+      flex: 0 0 220px;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 7px 11px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .pill.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .pill:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    #countTiles {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    #countTiles .pill,
+    #connectionTiles .pill,
+    #bandwidthTiles .pill,
+    #qualityTiles .pill,
+    #udpTiles .pill,
+    #durationTiles .pill {
+      width: 100%;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      white-space: nowrap;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-weight: 700;
+    }
+
+    #connectionTiles,
+    #bandwidthTiles,
+    #qualityTiles,
+    #udpTiles,
+    #durationTiles {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-auto-rows: 44px;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .connection-custom-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      transition: opacity 0.2s ease;
+    }
+
+    .connection-custom-input {
+      width: 0;
+      min-width: 0;
+      opacity: 0;
+      margin-left: 0;
+      padding: 0;
+      border: 0;
+      transition: width 0.22s ease, opacity 0.18s ease, margin-left 0.22s ease;
+      pointer-events: none;
+    }
+
+    .pill.custom-edit {
+      justify-content: center;
+      padding: 10px 12px;
+      overflow: visible;
+    }
+
+    .custom-edit-badge {
+      position: absolute;
+      top: -9px;
+      right: 10px;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      display: inline-grid;
+      place-items: center;
+      background: #fff;
+      color: #1769aa;
+      border: 1px solid #8bbbe8;
+      box-shadow: 0 1px 2px rgba(12, 24, 39, 0.1);
+    }
+
+    .pill.custom-edit .connection-custom-label {
+      opacity: 0;
+      width: 0;
+      overflow: hidden;
+    }
+
+    .pill.custom-edit .connection-custom-input {
+      width: 92px;
+      opacity: 1;
+      margin-left: 0;
+      padding: 4px 8px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      pointer-events: auto;
+      background: #fff;
+      color: var(--text);
+      height: 28px;
+    }
+
+    .count-popular-tag {
+      position: absolute;
+      top: -8px;
+      right: 10px;
+      min-height: 20px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #e7f2ff;
+      color: #1769aa;
+      border: 1px solid #b6d6f4;
+      line-height: 1;
+    }
+
+    .addons {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .addon {
+      display: grid;
+      grid-template-columns: 22px 1fr auto;
+      gap: 10px;
+      align-items: start;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .country.selected {
+      border-color: var(--green);
+      background: var(--green-soft);
+      box-shadow: inset 0 0 0 1px var(--green);
+    }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      color: var(--muted);
+      background: #fff;
+    }
+
+    .readonly-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .specified-ip-picker {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfdff;
+      margin-bottom: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .specified-ip-filters {
+      display: grid;
+      grid-template-columns: minmax(320px, 1.4fr) minmax(0, 1fr) 180px;
+      gap: 10px;
+    }
+
+    .location-filter-block {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .location-mode {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .location-select-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .filter-label-text {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .selected-ip-tags-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #28415f;
+    }
+
+    .selected-ip-tags-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      flex: 0 0 auto;
+    }
+
+    .text-btn {
+      border: 0;
+      background: transparent;
+      color: var(--primary);
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .selected-ip-tags {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      overflow: hidden;
+      white-space: nowrap;
+      flex-wrap: nowrap;
+      flex: 1 1 auto;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .selected-ip-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
+      border: 1px solid #b8d7f4;
+      border-radius: 999px;
+      background: #eef6ff;
+      color: #194770;
+      padding: 5px 9px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .selected-ip-tag button {
+      border: 0;
+      background: transparent;
+      padding: 0;
+      line-height: 1;
+      color: inherit;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .selected-ip-summary-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .selected-ip-expand {
+      display: none;
+      align-items: center;
+      gap: 4px;
+      color: #264a72;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+
+    .selected-ip-expand.visible {
+      display: inline-flex;
+    }
+
+    .selected-ip-panel {
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 12px;
+      max-height: 320px;
+      overflow: auto;
+      gap: 12px;
+    }
+
+    .selected-ip-panel.open {
+      display: grid;
+    }
+
+    .selected-ip-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: #28415f;
+      font-size: 13px;
+      font-weight: 800;
+      position: sticky;
+      top: 0;
+      background: #ffffff;
+      padding-bottom: 6px;
+      z-index: 1;
+    }
+
+    .selected-ip-group {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      background: #fbfdff;
+    }
+
+    .selected-ip-group-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .selected-ip-group-title {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 800;
+      color: #22344d;
+    }
+
+    .selected-ip-group-count {
+      color: #556b86;
+      font-weight: 700;
+    }
+
+    .selected-ip-group-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .selected-ip-city-group {
+      border-top: 1px dashed #d8e4f0;
+      padding-top: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .selected-ip-city-group:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .selected-ip-city-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: #405a78;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .selected-ip-tag.weak {
+      background: #f5f7fa;
+      border-color: #d9e3ee;
+      color: #7b8da3;
+    }
+
+    .segment-results {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .segment-item {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+      min-height: 118px;
+      cursor: pointer;
+      transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .segment-item.selected {
+      border-color: var(--primary);
+      background: linear-gradient(180deg, #f7fbff 0%, #eef6ff 100%);
+      box-shadow: inset 0 0 0 1px #92bee8;
+    }
+
+    .segment-item.pending {
+      background: linear-gradient(180deg, #fbfdff 0%, #f4f8fc 100%);
+    }
+
+    .segment-item-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding-right: 18px;
+      min-width: 0;
+    }
+
+    .segment-cidr {
+      font-size: 19px;
+      line-height: 1.1;
+      font-weight: 850;
+      letter-spacing: 0;
+      color: #25354a;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .segment-meta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #51667f;
+      font-weight: 700;
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+
+    .segment-meta .price-text {
+      font-size: 14px;
+      color: #214e7a;
+      font-weight: 850;
+      white-space: nowrap;
+    }
+
+    .segment-stock {
+      margin-left: auto;
+      color: #3f5167;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .segment-qty-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      padding-top: 2px;
+    }
+
+    .segment-qty-box {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) 34px;
+      align-items: center;
+      border: 1px solid #c8d8e9;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.88);
+      overflow: hidden;
+      min-height: 38px;
+    }
+
+    .segment-step {
+      border: 0;
+      background: transparent;
+      color: #274766;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+      height: 100%;
+    }
+
+    .segment-step:disabled {
+      cursor: not-allowed;
+      color: #a0aebc;
+    }
+
+    .segment-qty-input {
+      border: 0;
+      background: transparent;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: #213b58;
+      width: 100%;
+      min-width: 0;
+      padding: 0 6px;
+    }
+
+    .segment-qty-input:focus {
+      outline: none;
+    }
+
+    .segment-qty-caption {
+      font-size: 11px;
+      color: #70839b;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .specified-ip-results {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .specified-ip-item {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 10px 12px 9px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 7px;
+      min-height: 74px;
+      cursor: pointer;
+      transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .specified-ip-top {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      padding-right: 18px;
+      min-width: 0;
+    }
+
+    .specified-ip-item .ip-text {
+      font-weight: 700;
+      color: #22344d;
+      font-size: 12px;
+      letter-spacing: 0;
+      white-space: nowrap;
+      overflow: visible;
+      text-overflow: clip;
+      line-height: 1.2;
+      font-variant-numeric: tabular-nums;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .specified-ip-meta {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    .specified-ip-item .flag-slot {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .specified-ip-item .country-hover {
+      position: absolute;
+      left: 0;
+      bottom: calc(100% + 7px);
+      transform: translateY(2px);
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #bcd6f0;
+      background: #ffffff;
+      color: #24425f;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.16s ease, transform 0.16s ease;
+      box-shadow: 0 6px 16px rgba(20, 43, 69, 0.14);
+      z-index: 2;
+    }
+
+    .specified-ip-item .flag-slot:hover .country-hover {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .specified-ip-item .price-text {
+      font-weight: 800;
+      color: #1d4f7b;
+      white-space: nowrap;
+      font-size: 11px;
+    }
+
+    .specified-ip-code {
+      font-size: 11px;
+      font-weight: 700;
+      color: #4d627d;
+      white-space: nowrap;
+    }
+
+    .specified-ip-check {
+      opacity: 0;
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 30px;
+      height: 30px;
+      clip-path: polygon(100% 0, 0 0, 100% 100%);
+      display: inline-grid;
+      place-items: center;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      background: #7fb2ea;
+      transition: opacity 0.16s ease, transform 0.16s ease;
+      transform: scale(0.92);
+      transform-origin: top right;
+      padding-left: 9px;
+      padding-bottom: 8px;
+    }
+
+    .specified-ip-item.selected {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      box-shadow: inset 0 0 0 1px #8bbbe8;
+    }
+
+    .specified-ip-item.selected .specified-ip-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .addon input {
+      margin-top: 3px;
+    }
+
+    .addon-title {
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .addon-copy {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+      margin: 0;
+    }
+
+    .price {
+      color: var(--primary);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .page-btn {
+      min-width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      color: var(--text);
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .page-btn.active {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .page-btn:disabled {
+      cursor: not-allowed;
+      color: #9aa6b5;
+      background: #f2f5f8;
+    }
+
+    .summary {
+      position: sticky;
+      top: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .summary h2 {
+      margin: 0 0 14px;
+      font-size: 18px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 9px 0;
+      border-bottom: 1px solid #edf1f6;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .summary-row strong {
+      color: var(--text);
+      text-align: right;
+    }
+
+    .summary-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .summary-info-btn {
+      width: 18px;
+      height: 18px;
+      border: 1px solid #bfd3e8;
+      border-radius: 999px;
+      background: #f3f8ff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-grid;
+      place-items: center;
+      padding: 0;
+    }
+
+    .summary-allocation-popover {
+      margin-top: 6px;
+      border: 1px solid #d9e5f2;
+      border-radius: 8px;
+      background: #f8fbff;
+      padding: 8px;
+      display: none;
+    }
+
+    .summary-allocation-popover.open {
+      display: block;
+    }
+
+    .allocation-grid {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr) auto;
+      gap: 6px 8px;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .allocation-grid-head {
+      color: var(--muted);
+      font-weight: 700;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #e5edf6;
+      margin-bottom: 4px;
+    }
+
+    .allocation-qty {
+      text-align: right;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .total {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 12px;
+      padding: 16px 0;
+    }
+
+    .total span {
+      color: var(--muted);
+    }
+
+    .total strong {
+      font-size: 26px;
+    }
+
+    .switch-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 12px 0;
+      padding: 10px;
+      border-radius: 8px;
+      background: var(--green-soft);
+      color: var(--green);
+      font-weight: 800;
+    }
+
+    .switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+      flex: 0 0 auto;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #aab4c3;
+      border-radius: 999px;
+      transition: 0.2s;
+    }
+
+    .slider::before {
+      content: "";
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      left: 3px;
+      top: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.2s;
+    }
+
+    .switch input:checked + .slider {
+      background: var(--green);
+    }
+
+    .switch input:checked + .slider::before {
+      transform: translateX(22px);
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      width: 100%;
+      min-height: 44px;
+      border-radius: 7px;
+      border: 0;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .primary-btn {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .primary-btn:disabled {
+      background: #aab4c3;
+      cursor: not-allowed;
+    }
+
+    .secondary-btn {
+      background: #eef3f8;
+      color: var(--text);
+    }
+
+    .coupon-row {
+      display: grid;
+      grid-template-columns: 1fr 84px;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .notice {
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 10px 0;
+    }
+
+    .notice.error {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .notice.warn {
+      background: var(--orange-soft);
+      color: var(--orange);
+    }
+
+    .notice.ok {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .checkout {
+      margin-top: 16px;
+      display: none;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 16px;
+    }
+
+    .checkout.open {
+      display: block;
+    }
+
+    .checkout-title {
+      font-size: 18px;
+      font-weight: 850;
+      margin: 0 0 10px;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    @media (max-width: 1180px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .summary {
+        position: static;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .main {
+        padding: 16px;
+      }
+
+      .topbar,
+      .section-head,
+      .filter-row,
+      .city-country-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .filter-row {
+        display: grid;
+        align-items: stretch;
+      }
+
+      .country-search {
+        width: 100%;
+        flex: 1 1 auto;
+      }
+
+      #countTiles,
+      #connectionTiles,
+      #bandwidthTiles,
+      #qualityTiles,
+      #udpTiles,
+      #durationTiles {
+        grid-template-columns: 1fr;
+        grid-auto-rows: auto;
+      }
+
+      #countTiles .pill,
+      #connectionTiles .pill,
+      #bandwidthTiles .pill,
+      #qualityTiles .pill,
+      #udpTiles .pill,
+      #durationTiles .pill {
+        white-space: normal;
+        line-height: 1.25;
+        min-height: 46px;
+      }
+
+      .option-grid,
+		      .countries,
+          .country-panel-grid,
+		      .city-country-row,
+          .location-select-row,
+      .specified-ip-filters,
+      .specified-ip-results,
+      .segment-results,
+      .addons,
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">IP</span> IPWeb</div>
+      <div class="nav-title">Products</div>
+      <div class="nav-item">Dashboard</div>
+      <div class="nav-item active">Static Residential</div>
+      <div class="nav-item">Rotating Residential</div>
+      <div class="nav-item">Data Center</div>
+      <div class="nav-title">Billing</div>
+      <div class="nav-item">Plans & Pricing</div>
+      <div class="nav-item">Subscription</div>
+      <div class="nav-item">Orders</div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div class="page-title">
+          <h1>静态住宅代理购买配置</h1>
+          <p>配置静态住宅代理资源，系统会实时生成 Quote 并在支付前锁定库存。</p>
+        </div>
+        <span class="badge prototype-badge">V1 Prototype</span>
+      </div>
+
+      <div class="layout">
+        <div class="stack">
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <h2>1. 代理基础属性</h2>
+                <p class="hint">先确定独享级别、带宽与连接能力，再进行业务字段与地区配置。</p>
+              </div>
+              <span class="badge">Required</span>
+            </div>
+            <div class="option-grid" id="exclusivityGrid"></div>
+            <div class="base-param-stack">
+              <label>
+                带宽
+                <div id="bandwidthTiles"></div>
+              </label>
+              <label>
+                连接数（每 IP 并发）
+                <div id="connectionTiles"></div>
+              </label>
+              <label>
+                IP 质量
+                <div id="qualityTiles"></div>
+              </label>
+              <label>
+                UDP 支持
+                <div id="udpTiles"></div>
+              </label>
+              <label>
+                业务用途
+                <select id="useCaseSelect">
+                  <option value="">请选择</option>
+                  <option value="scraping">数据采集</option>
+                  <option value="serp">SEO / SERP 分析</option>
+                  <option value="ads">广告验证</option>
+                  <option value="social">社媒运营</option>
+                  <option value="localization">本地化测试</option>
+                  <option value="ai">AI / RAG 数据获取</option>
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <h2>2. IP 来源与数量</h2>
+                <p id="sourceModeHint" class="hint">IP 数量决定地区配额池上限；IP 来源模式会影响可编辑字段与价格。</p>
+              </div>
+            </div>
+            <div class="pill-row" id="sourceModeRow">
+              <button class="pill active" type="button" id="sourceRandom">随机</button>
+              <button class="pill" type="button" id="sourceCSegment">按段采购</button>
+              <button class="pill" type="button" id="sourceSpecifiedIp">指定 IP</button>
+            </div>
+            <div class="pill-row" id="countTiles"></div>
+            <div id="segmentPurchasePicker" class="specified-ip-picker" style="display:none;">
+              <div class="specified-ip-filters">
+                <div class="location-filter-block">
+                  <div class="location-mode">
+                    <button class="pill" type="button" data-segment-location-dimension="country">国家</button>
+                    <button class="pill" type="button" data-segment-location-dimension="city">城市</button>
+                  </div>
+                  <div class="location-select-row">
+                    <label>
+                      <span id="segmentCountryFilterLabel" class="filter-label-text">国家筛选</span>
+                      <select id="segmentCountryFilter">
+                        <option value="ALL">ALL</option>
+                      </select>
+                    </label>
+                    <label id="segmentCityFilterWrap" style="display:none;">
+                      <span class="filter-label-text">城市筛选</span>
+                      <select id="segmentCityFilter">
+                        <option value="">请选择城市</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <label>
+                  模糊搜索 IP 段
+                  <input id="segmentKeyword" type="text" placeholder="输入 IP 段，如 188.122">
+                </label>
+                <label>
+                  排序方式
+                  <select id="segmentSortMode">
+                    <option value="priceAsc">单价从低到高</option>
+                    <option value="priceDesc">单价从高到低</option>
+                    <option value="stockDesc">库存数量从高到低</option>
+                    <option value="stockAsc">库存数量从低到高</option>
+                  </select>
+                </label>
+              </div>
+              <div class="selected-ip-tags-head">
+                <span>已选 IP 段</span>
+                <div class="selected-ip-tags-actions">
+                  <button id="selectedSegmentExpandBtn" class="text-btn selected-ip-expand" type="button">展开</button>
+                  <button id="clearSegmentSelection" class="text-btn" type="button">清空全部</button>
+                </div>
+              </div>
+              <div class="selected-ip-summary-row">
+                <div id="selectedSegmentTags" class="selected-ip-tags"></div>
+              </div>
+              <div id="selectedSegmentPanel" class="selected-ip-panel"></div>
+              <div id="segmentPurchaseResults" class="segment-results"></div>
+              <div id="segmentPurchasePagination" class="pagination"></div>
+            </div>
+            <div id="specifiedIpPicker" class="specified-ip-picker" style="display:none;">
+              <div class="specified-ip-filters">
+                <div class="location-filter-block">
+                  <div class="location-mode">
+                    <button class="pill" type="button" data-specified-location-dimension="country">国家</button>
+                    <button class="pill" type="button" data-specified-location-dimension="city">城市</button>
+                  </div>
+                  <div class="location-select-row">
+                    <label>
+                      <span id="specifiedCountryFilterLabel" class="filter-label-text">国家筛选</span>
+                      <select id="specifiedCountryFilter">
+                        <option value="ALL">ALL</option>
+                      </select>
+                    </label>
+                    <label id="specifiedCityFilterWrap" style="display:none;">
+                      <span class="filter-label-text">城市筛选</span>
+                      <select id="specifiedCityFilter">
+                        <option value="">请选择城市</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <label>
+                  模糊搜索 IP
+                  <input id="specifiedKeyword" type="text" placeholder="输入 IP 片段，如 13.10">
+                </label>
+                <label>
+                  价格排序
+                  <select id="specifiedPriceSort">
+                    <option value="asc">单价从低到高</option>
+                    <option value="desc">单价从高到低</option>
+                  </select>
+                </label>
+              </div>
+              <div class="selected-ip-tags-head">
+                <span>已选 IP</span>
+                <div class="selected-ip-tags-actions">
+                  <button id="selectedIpExpandBtn" class="text-btn selected-ip-expand" type="button">展开</button>
+                  <button id="clearSpecifiedSelection" class="text-btn" type="button">清空全部</button>
+                </div>
+              </div>
+              <div class="selected-ip-summary-row">
+                <div id="selectedSpecifiedTags" class="selected-ip-tags"></div>
+              </div>
+              <div id="selectedSpecifiedPanel" class="selected-ip-panel"></div>
+              <div id="specifiedIpResults" class="specified-ip-results"></div>
+              <div id="specifiedIpPagination" class="pagination"></div>
+            </div>
+            <div class="form-row">
+              <label style="grid-column: span 3;">
+                购买时长
+                <div id="durationTiles"></div>
+              </label>
+            </div>
+          </section>
+
+          <section class="section">
+            <div class="section-head">
+              <div>
+                <h2 id="allocationSectionTitle">3. 地区配额</h2>
+                <p id="allocationSectionHint" class="hint">配额分摊模型：未显式分配的数量进入全球随机；国家和大洲可用量由城市库存聚合。</p>
+              </div>
+              <button class="pill" id="resetCountries" type="button">重置全部</button>
+            </div>
+            <div id="allocationToolbar" class="allocation-toolbar"></div>
+            <div class="selected-alert" id="selectedAlert"></div>
+            <div class="countries" id="countryGrid"></div>
+            <div class="pagination" id="countryPagination"></div>
+            <div class="notice warn">如果您需要其他国家的 IP，请联系我们的客户支持团队获取定制的代理解决方案。</div>
+          </section>
+
+        </div>
+
+        <aside class="summary">
+          <h2>配置摘要</h2>
+          <div id="summaryRows"></div>
+
+          <div id="summaryNotice"></div>
+
+          <div class="total">
+            <span>当前应付</span>
+            <strong id="totalPrice">$0.00</strong>
+          </div>
+          <button class="primary-btn" id="continueBtn" type="button">确认配置并继续</button>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      exclusivity: "shared",
+      proxyCount: 100,
+      customCount: "",
+      countMode: "100",
+      bandwidth: "1000",
+      sourceMode: "random",
+      connectionCount: 200,
+      connectionMode: "200",
+      duration: "30",
+      quality: "standard",
+      useCase: "",
+      udp: "off",
+      allocationDimension: "country",
+      allocationContinent: "ALL",
+      allocationCountryPage: 1,
+      allocationCountrySearch: "",
+      selectedCityCountry: "US",
+      cityCountryPanelOpen: false,
+      cityCountryPanelContinent: "ALL",
+      cityCountryPanelSearch: "",
+      citySearch: "",
+      allocationError: "",
+      segmentLocationDimension: "country",
+      segmentCountryFilter: "ALL",
+      segmentCityFilter: "",
+      segmentKeyword: "",
+      segmentSortMode: "priceAsc",
+      segmentPage: 1,
+      selectedSegments: [],
+      segmentQuantities: {},
+      segmentSelectionExpanded: false,
+      specifiedLocationDimension: "country",
+      specifiedCountryFilter: "ALL",
+      specifiedCityFilter: "",
+      specifiedKeyword: "",
+      specifiedPriceSort: "asc",
+      specifiedIpPage: 1,
+      selectedSpecifiedIps: [],
+      specifiedSelectionExpanded: false,
+      allocations: {
+        continents: {},
+        countries: {},
+        cities: {}
+      }
+    };
+
+    const exclusivityOptions = [
+      { id: "shared", title: "共享", note: "多人共享资源，适合成本优先场景", base: 0.60 },
+      { id: "private", title: "独享", note: "独立资源交付，适合稳定业务场景", base: 0.95 },
+      { id: "dedicated", title: "尊享", note: "高优先级资源池，适合高要求业务", base: 1.95 }
+    ];
+
+    const countOptions = [20, 50, 75, 100, 250, 500, 1000, 2000, 5000, 10000];
+    const bandwidthOptions = [
+      { value: "250", label: "250 GB" },
+      { value: "1000", label: "1,000 GB" },
+      { value: "5000", label: "5,000 GB" },
+      { value: "unlimited", label: "Unlimited GB" }
+    ];
+    const durationOptions = [
+      { value: "7", label: "7 天", factor: 0.35 },
+      { value: "15", label: "15 天", factor: 0.58 },
+      { value: "30", label: "30 天", factor: 1 },
+      { value: "60", label: "60 天", factor: 2 },
+      { value: "90", label: "90 天", factor: 2.85 },
+      { value: "365", label: "1 年", factor: 12 }
+    ];
+    const qualityFactors = { basic: 0.9, standard: 1, premium: 1.25 };
+    const qualityOptions = [
+      { value: "basic", label: "基础" },
+      { value: "standard", label: "标准" },
+      { value: "premium", label: "高端" }
+    ];
+    const udpOptions = [
+      { value: "off", label: "关闭" },
+      { value: "on", label: "开启（每 IP +$0.20）" }
+    ];
+    const countryPageSize = 6;
+    const continentOptions = ["Asia", "North America", "Europe", "Africa", "South America", "Oceania"];
+    const countryMeta = {
+      US: { name: "United States", continent: "North America", icon: "🇺🇸" },
+      JP: { name: "Japan", continent: "Asia", icon: "🇯🇵" },
+      SG: { name: "Singapore", continent: "Asia", icon: "🇸🇬" },
+      HK: { name: "Hong Kong", continent: "Asia", icon: "🇭🇰" },
+      DE: { name: "Germany", continent: "Europe", icon: "🇩🇪" },
+      FR: { name: "France", continent: "Europe", icon: "🇫🇷" },
+      IT: { name: "Italy", continent: "Europe", icon: "🇮🇹" },
+      RO: { name: "Romania", continent: "Europe", icon: "🇷🇴" },
+      GB: { name: "United Kingdom", continent: "Europe", icon: "🇬🇧" },
+      CA: { name: "Canada", continent: "North America", icon: "🇨🇦" },
+      AU: { name: "Australia", continent: "Oceania", icon: "🇦🇺" },
+      IN: { name: "India", continent: "Asia", icon: "🇮🇳" }
+    };
+    const cityInventory = {
+      US: [
+        { id: "nyc", name: "New York", available: 12200 },
+        { id: "la", name: "Los Angeles", available: 9300 },
+        { id: "chicago", name: "Chicago", available: 5210 },
+        { id: "dallas", name: "Dallas", available: 3820 }
+      ],
+      JP: [
+        { id: "tokyo", name: "Tokyo", available: 620 },
+        { id: "osaka", name: "Osaka", available: 240 },
+        { id: "yokohama", name: "Yokohama", available: 152 }
+      ],
+      SG: [
+        { id: "singapore", name: "Singapore", available: 506 }
+      ],
+      HK: [
+        { id: "hong-kong", name: "Hong Kong", available: 1012 }
+      ],
+      DE: [
+        { id: "berlin", name: "Berlin", available: 2610 },
+        { id: "frankfurt", name: "Frankfurt", available: 3540 },
+        { id: "munich", name: "Munich", available: 1945 }
+      ],
+      FR: [
+        { id: "paris", name: "Paris", available: 3588 },
+        { id: "marseille", name: "Marseille", available: 1340 },
+        { id: "lyon", name: "Lyon", available: 1150 }
+      ],
+      IT: [
+        { id: "rome", name: "Rome", available: 2960 },
+        { id: "milan", name: "Milan", available: 3382 },
+        { id: "turin", name: "Turin", available: 2000 }
+      ],
+      RO: [
+        { id: "bucharest", name: "Bucharest", available: 1060 },
+        { id: "cluj", name: "Cluj-Napoca", available: 400 }
+      ],
+      GB: [
+        { id: "london", name: "London", available: 1424 },
+        { id: "manchester", name: "Manchester", available: 600 }
+      ],
+      CA: [
+        { id: "toronto", name: "Toronto", available: 1850 },
+        { id: "vancouver", name: "Vancouver", available: 1220 },
+        { id: "montreal", name: "Montreal", available: 780 }
+      ],
+      AU: [
+        { id: "sydney", name: "Sydney", available: 147 },
+        { id: "melbourne", name: "Melbourne", available: 100 }
+      ],
+      IN: [
+        { id: "mumbai", name: "Mumbai", available: 321 },
+        { id: "delhi", name: "Delhi", available: 260 },
+        { id: "bangalore", name: "Bangalore", available: 150 }
+      ]
+    };
+    Object.keys(countryMeta).forEach(code => {
+      countryMeta[code].available = (cityInventory[code] || []).reduce((sum, city) => sum + city.available, 0);
+    });
+    const hotCityCountries = ["US", "JP", "DE", "GB", "SG", "CA"];
+    const cSegmentPageSize = 20;
+    const specifiedIpPageSize = 20;
+    const money = value => `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const ipFromParts = (a, b, c, d) => `${a}.${b}.${c}.${d}`;
+    const specifiedIpPool = (() => {
+      const seeds = {
+        US: [23, 44, 61, 87],
+        JP: [13, 43, 126, 133],
+        SG: [103, 138, 139, 146],
+        HK: [45, 47, 58, 59],
+        DE: [79, 80, 84, 91],
+        FR: [51, 62, 80, 82],
+        IT: [79, 93, 95, 151],
+        RO: [5, 89, 92, 188],
+        GB: [18, 31, 51, 92],
+        CA: [24, 35, 47, 52],
+        AU: [13, 27, 43, 58],
+        IN: [13, 27, 49, 103]
+      };
+      const list = [];
+      Object.entries(countryMeta).forEach(([code, meta], countryIndex) => {
+        const basePrice = 1.12 + countryIndex * 0.03;
+        const cities = cityInventory[code] || [];
+        for (let i = 1; i <= 24; i += 1) {
+          const city = cities[(i - 1) % Math.max(cities.length, 1)] || { id: "unknown", name: "Unknown" };
+          const head = seeds[code][i % 4];
+          const second = (i * 11) % 250;
+          const third = (countryIndex * 17 + i * 3) % 250;
+          const fourth = (countryIndex * 21 + i * 7) % 250;
+          list.push({
+            id: `${code}-${i}`,
+            ip: ipFromParts(head, second + 1, third + 1, fourth + 1),
+            countryCode: code,
+            countryName: meta.name,
+            cityId: city.id,
+            cityName: city.name,
+            icon: meta.icon,
+            pricePerIp: Number((basePrice + (i % 9) * 0.04).toFixed(2)),
+            available: true
+          });
+        }
+      });
+      return list;
+    })();
+
+    const cSegmentPool = (() => {
+      const seeds = {
+        US: [18, 23, 44, 61],
+        JP: [13, 43, 126, 133],
+        SG: [103, 138, 139, 146],
+        HK: [45, 47, 58, 59],
+        DE: [79, 80, 84, 91],
+        FR: [51, 62, 80, 82],
+        IT: [79, 93, 95, 151],
+        RO: [5, 89, 92, 188],
+        GB: [18, 31, 51, 92],
+        CA: [24, 35, 47, 52],
+        AU: [13, 27, 43, 58],
+        IN: [13, 27, 49, 103]
+      };
+      const list = [];
+      Object.entries(countryMeta).forEach(([code, meta], countryIndex) => {
+        const basePrice = 1.78 + countryIndex * 0.07;
+        const cities = cityInventory[code] || [];
+        for (let i = 0; i < 4; i += 1) {
+          const city = cities[i % Math.max(cities.length, 1)] || { id: "unknown", name: "Unknown" };
+          const second = (countryIndex * 19 + i * 41 + 17) % 250;
+          const third = (countryIndex * 29 + i * 53 + 11) % 250;
+          list.push({
+            id: `${code}-segment-${i + 1}-${city.id}`,
+            cidr: `${seeds[code][i]}.${second + 1}.${third + 1}.0/24`,
+            countryCode: code,
+            countryName: meta.name,
+            cityId: city.id,
+            cityName: city.name,
+            icon: meta.icon,
+            pricePerIp: Number((basePrice + i * 0.18).toFixed(2)),
+            availableCount: 70 + ((countryIndex + 3) * 37 + i * 55)
+          });
+        }
+      });
+      return list;
+    })();
+
+    function initCountryFilter(selectId, labelBuilder) {
+      const select = document.getElementById(selectId);
+      const options = Object.entries(countryMeta)
+        .map(([code, meta]) => `<option value="${code}">${labelBuilder(meta, code)}</option>`)
+        .join("");
+      select.innerHTML = `<option value="ALL">ALL</option>${options}`;
+    }
+
+    function durationFactor() {
+      const found = durationOptions.find(item => item.value === state.duration);
+      return found ? found.factor : 1;
+    }
+
+    function currentUnitPrice() {
+      const option = exclusivityOptions.find(item => item.id === state.exclusivity);
+      let unit = option.base;
+      if (state.proxyCount >= 500) unit *= 0.95;
+      if (state.proxyCount >= 1000) unit *= 0.9;
+      if (state.proxyCount >= 5000) unit *= 0.8;
+      return unit * qualityFactors[state.quality];
+    }
+
+    const cityKey = (countryCode, cityId) => `${countryCode}:${cityId}`;
+
+    function allocationBucket(type) {
+      return state.allocations[type] || {};
+    }
+
+    function countryCityTotal(code) {
+      return (cityInventory[code] || []).reduce((sum, city) => sum + city.available, 0);
+    }
+
+    function cityOptionsForCountry(code) {
+      return cityInventory[code] || [];
+    }
+
+    function explicitCityInventoryTotal(code, pendingCityId = "", pendingValue = null) {
+      return cityOptionsForCountry(code).reduce((sum, city) => {
+        const value = city.id === pendingCityId
+          ? Number(pendingValue || 0)
+          : Number(allocationBucket("cities")[cityKey(code, city.id)] || 0);
+        return value > 0 ? sum + city.available : sum;
+      }, 0);
+    }
+
+    function countriesInContinent(continent) {
+      return Object.entries(countryMeta)
+        .filter(([, meta]) => meta.continent === continent)
+        .map(([code]) => code);
+    }
+
+    function countryRandomAvailable(code) {
+      return Math.max(0, countryCityTotal(code) - explicitCityInventoryTotal(code));
+    }
+
+    function continentRandomAvailable(continent) {
+      return countriesInContinent(continent).reduce((sum, code) => {
+        if (Number(allocationBucket("countries")[code] || 0) > 0) return sum;
+        return sum + Math.max(0, countryCityTotal(code) - explicitCityInventoryTotal(code));
+      }, 0);
+    }
+
+    function inventoryLocationMatches(item, dimension, countryCode, cityId) {
+      if (dimension === "city") {
+        return countryCode !== "ALL" && Boolean(cityId) && item.countryCode === countryCode && item.cityId === cityId;
+      }
+      return countryCode === "ALL" || item.countryCode === countryCode;
+    }
+
+    function renderInventoryLocationControls(prefix) {
+      const isSegment = prefix === "segment";
+      const dimension = isSegment ? state.segmentLocationDimension : state.specifiedLocationDimension;
+      const countryFilter = isSegment ? state.segmentCountryFilter : state.specifiedCountryFilter;
+      const cityFilter = isSegment ? state.segmentCityFilter : state.specifiedCityFilter;
+      const label = document.getElementById(`${prefix}CountryFilterLabel`);
+      const countrySelect = document.getElementById(`${prefix}CountryFilter`);
+      const cityWrap = document.getElementById(`${prefix}CityFilterWrap`);
+      const citySelect = document.getElementById(`${prefix}CityFilter`);
+      document.querySelectorAll(`button[data-${prefix}-location-dimension]`).forEach(button => {
+        button.classList.toggle("active", button.dataset[`${prefix}LocationDimension`] === dimension);
+      });
+      if (label) label.textContent = dimension === "city" ? "国家" : "国家筛选";
+      const allOption = countrySelect?.querySelector('option[value="ALL"]');
+      if (allOption) allOption.textContent = dimension === "city" ? "请选择国家" : "ALL";
+      if (!cityWrap || !citySelect) return;
+      cityWrap.style.display = dimension === "city" ? "block" : "none";
+      if (dimension !== "city") {
+        citySelect.innerHTML = `<option value="">请选择城市</option>`;
+        return;
+      }
+      const cities = countryFilter === "ALL" ? [] : cityOptionsForCountry(countryFilter);
+      citySelect.disabled = countryFilter === "ALL";
+      citySelect.innerHTML = `<option value="">${countryFilter === "ALL" ? "请先选择国家" : "请选择城市"}</option>${cities
+        .map(city => `<option value="${city.id}" ${cityFilter === city.id ? "selected" : ""}>${city.name}</option>`)
+        .join("")}`;
+    }
+
+    function allocatedTotal(exclude = {}) {
+      const skip = `${exclude.type || ""}:${exclude.key || ""}`;
+      const continentTotal = Object.entries(allocationBucket("continents"))
+        .reduce((sum, [key, value]) => sum + (skip === `continents:${key}` ? 0 : Number(value || 0)), 0);
+      const countryTotal = Object.entries(allocationBucket("countries"))
+        .reduce((sum, [key, value]) => sum + (skip === `countries:${key}` ? 0 : Number(value || 0)), 0);
+      const cityTotal = Object.entries(allocationBucket("cities"))
+        .reduce((sum, [key, value]) => sum + (skip === `cities:${key}` ? 0 : Number(value || 0)), 0);
+      return continentTotal + countryTotal + cityTotal;
+    }
+
+    function randomRemainder() {
+      return Math.max(0, state.proxyCount - allocatedTotal());
+    }
+
+    function cleanAllocationZeros() {
+      ["continents", "countries", "cities"].forEach(type => {
+        Object.entries(allocationBucket(type)).forEach(([key, value]) => {
+          if (!Number(value || 0)) delete state.allocations[type][key];
+        });
+      });
+    }
+
+    function clearRandomAllocations() {
+      state.allocations = { continents: {}, countries: {}, cities: {} };
+      state.allocationError = "";
+    }
+
+    function quote() {
+      const months = durationFactor();
+      const base = state.sourceMode === "cSegment"
+        ? activeSegmentPurchases().reduce((sum, { item, qty }) => sum + item.pricePerIp * qty * months, 0)
+        : currentUnitPrice() * state.proxyCount * months;
+      const connectionCharge = state.proxyCount * months * (state.connectionCount <= 100 ? 0 : state.connectionCount <= 500 ? 0.03 : 0.06);
+      const bandwidthCharge = state.bandwidth === "unlimited" ? state.proxyCount * 0.08 * months : 0;
+      const udpCharge = state.udp === "on" ? state.proxyCount * 0.2 * months : 0;
+      const subtotal = base + connectionCharge + bandwidthCharge + udpCharge;
+      return {
+        base,
+        connectionCharge,
+        bandwidthCharge,
+        udpCharge,
+        total: Math.max(0, subtotal)
+      };
+    }
+
+    function validations() {
+      const errors = [];
+      if (!state.bandwidth) errors.push("请先选择带宽，再配置 IP 数量。");
+      if (!state.useCase) errors.push("请选择业务用途。");
+      if (state.sourceMode === "specifiedIp" && state.selectedSpecifiedIps.length < 1) errors.push("请选择至少一个指定 IP。");
+      if (state.sourceMode === "cSegment") {
+        if (state.selectedSegments.length < 1) errors.push("请至少选择一个按段采购段。");
+        if (!activeSegmentPurchases().length) errors.push("请至少为一个已选 IP 段填写大于 0 的购买数量。");
+      } else if (state.sourceMode === "random") {
+        if (allocatedTotal() > state.proxyCount) errors.push("地区配额不能超过 IP 数量。");
+        if (state.allocationError) errors.push(state.allocationError);
+        Object.entries(allocationBucket("continents")).forEach(([continent, value]) => {
+          if (Number(value) > continentRandomAvailable(continent)) {
+            errors.push(`${continent} 随机当前最多可用 ${continentRandomAvailable(continent).toLocaleString()}。`);
+          }
+        });
+        Object.entries(allocationBucket("countries")).forEach(([code, value]) => {
+          if (Number(value) > countryRandomAvailable(code)) {
+            errors.push(`${countryMeta[code].name} 随机当前最多可用 ${countryRandomAvailable(code).toLocaleString()}。`);
+          }
+        });
+        Object.entries(allocationBucket("cities")).forEach(([key, value]) => {
+          const [code, cityId] = key.split(":");
+          const city = (cityInventory[code] || []).find(item => item.id === cityId);
+          if (city && Number(value) > city.available) {
+            errors.push(`${countryMeta[code].name} / ${city.name} 当前最多可用 ${city.available.toLocaleString()}。`);
+          }
+        });
+      }
+      return errors;
+    }
+
+    function setAllocationValue(type, key, rawValue, maxByInventory, label) {
+      const nextValue = Math.max(0, Math.floor(Number(rawValue || 0)));
+      const otherAllocated = allocatedTotal({ type, key });
+      const maxByQuota = Math.max(0, state.proxyCount - otherAllocated);
+      const maxAllowed = Math.min(maxByInventory, maxByQuota);
+      if (nextValue > maxAllowed) {
+        state.allocationError = `${label} 当前最多可分配 ${maxAllowed.toLocaleString()} 个 IP。`;
+        render();
+        return;
+      }
+      state.allocations[type][key] = nextValue;
+      state.allocationError = "";
+      cleanAllocationZeros();
+      render();
+    }
+
+    function setContinentAllocation(continent, rawValue) {
+      setAllocationValue("continents", continent, rawValue, continentRandomAvailable(continent), `${continent} 随机`);
+    }
+
+    function setCountry(code, rawValue) {
+      setAllocationValue("countries", code, rawValue, countryRandomAvailable(code), `${countryMeta[code].name} 随机`);
+    }
+
+    function setCityAllocation(code, cityId, rawValue) {
+      const city = (cityInventory[code] || []).find(item => item.id === cityId);
+      if (!city) return;
+      const previous = Number(allocationBucket("cities")[cityKey(code, cityId)] || 0);
+      const nextValue = Math.max(0, Math.floor(Number(rawValue || 0)));
+      const countryRandom = Number(allocationBucket("countries")[code] || 0);
+      const remainingForCountryRandom = Math.max(0, countryCityTotal(code) - explicitCityInventoryTotal(code, cityId, nextValue));
+      if (countryRandom > remainingForCountryRandom) {
+        state.allocationError = `${countryMeta[code].name} 随机已占用 ${countryRandom.toLocaleString()}，请先调低国家随机后再配置 ${city.name}。`;
+        state.allocations.cities[cityKey(code, cityId)] = previous;
+        render();
+        return;
+      }
+      setAllocationValue("cities", cityKey(code, cityId), rawValue, city.available, `${countryMeta[code].name} / ${city.name}`);
+    }
+
+    function setProxyCount(nextCount) {
+      const nextValue = Math.max(1, Math.floor(Number(nextCount || 1)));
+      if (state.sourceMode === "random" && allocatedTotal() > nextValue) {
+        state.allocationError = "新的 IP 数量小于已填写地区配额，请先调整地区配额。";
+        render();
+        return false;
+      }
+      state.proxyCount = nextValue;
+      state.allocationError = "";
+      return true;
+    }
+
+    function renderExclusivity() {
+      const root = document.getElementById("exclusivityGrid");
+      root.innerHTML = "";
+      exclusivityOptions.forEach(option => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `tile ${state.exclusivity === option.id ? "active" : ""}`;
+        button.innerHTML = `<span class="tile-title">${option.title}</span><span class="tile-note">${option.note}</span>`;
+        button.addEventListener("click", () => {
+          state.exclusivity = option.id;
+          render();
+        });
+        root.appendChild(button);
+      });
+    }
+
+    function renderCountTiles() {
+      const root = document.getElementById("countTiles");
+      root.innerHTML = "";
+      const popularCount = 100;
+      const disabled = !state.bandwidth || state.sourceMode === "specifiedIp";
+      const options = [...countOptions.map(item => String(item)), "custom"];
+      options.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        const active = state.countMode === item;
+        button.className = `pill ${active ? "active" : ""} ${item === "custom" && active ? "custom-edit" : ""}`;
+        button.disabled = disabled;
+        if (item === "custom") {
+          button.innerHTML = `
+            <span class="connection-custom-label">自定义</span>
+            ${active ? `<span class="custom-edit-badge" title="编辑">✎</span>` : ""}
+            <input id="countCustomInlineInput" class="connection-custom-input" type="number" min="1" step="1" value="${state.proxyCount}">
+          `;
+        } else {
+          const count = Number(item);
+          const displayUnit = currentUnitPrice();
+          const popularTag = count === popularCount ? `<span class="count-popular-tag">最受欢迎</span>` : "";
+          button.innerHTML = `${count.toLocaleString()} IPs · ${money(displayUnit)}/IP${popularTag}`;
+        }
+        button.addEventListener("click", () => {
+          state.countMode = item;
+          if (item !== "custom") {
+            const count = Number(item);
+            if (!setProxyCount(count)) return;
+            state.customCount = "";
+          }
+          render();
+          if (item === "custom") {
+            requestAnimationFrame(() => {
+              const input = document.getElementById("countCustomInlineInput");
+              if (input) input.focus();
+            });
+          }
+        });
+        root.appendChild(button);
+      });
+      const inlineInput = document.getElementById("countCustomInlineInput");
+      if (inlineInput) {
+        inlineInput.addEventListener("click", event => event.stopPropagation());
+        inlineInput.addEventListener("input", event => {
+          const value = Math.max(1, Math.floor(Number(event.target.value || 1)));
+          if (!setProxyCount(value)) return;
+          state.customCount = String(value);
+          state.countMode = "custom";
+          renderSummary();
+        });
+      }
+    }
+
+    function renderConnectionTiles() {
+      const root = document.getElementById("connectionTiles");
+      const options = ["50", "100", "200", "500", "custom"];
+      const popularConnection = "200";
+      root.innerHTML = "";
+      options.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        const active = state.connectionMode === item;
+        button.className = `pill ${active ? "active" : ""} ${item === "custom" && active ? "custom-edit" : ""}`;
+        if (item === "custom") {
+          button.innerHTML = `
+            <span class="connection-custom-label">自定义</span>
+            ${active ? `<span class="custom-edit-badge" title="编辑">✎</span>` : ""}
+            <input id="connectionCustomInlineInput" class="connection-custom-input" type="number" min="1" max="1000" step="1" value="${state.connectionCount}">
+          `;
+        } else {
+          const popularTag = item === popularConnection ? `<span class="count-popular-tag">🔥</span>` : "";
+          button.innerHTML = `${item}${popularTag}`;
+        }
+        button.addEventListener("click", () => {
+          state.connectionMode = item;
+          if (item !== "custom") state.connectionCount = Number(item);
+          render();
+          if (item === "custom") {
+            requestAnimationFrame(() => {
+              const input = document.getElementById("connectionCustomInlineInput");
+              if (input) input.focus();
+            });
+          }
+        });
+        root.appendChild(button);
+      });
+      const inlineInput = document.getElementById("connectionCustomInlineInput");
+      if (inlineInput) {
+        inlineInput.addEventListener("click", event => event.stopPropagation());
+        inlineInput.addEventListener("input", event => {
+          const value = Math.max(1, Math.min(1000, Math.floor(Number(event.target.value || 1))));
+          state.connectionCount = value;
+          state.connectionMode = "custom";
+          renderSummary();
+        });
+      }
+    }
+
+    function renderQualityTiles() {
+      const root = document.getElementById("qualityTiles");
+      const popularQuality = "standard";
+      root.innerHTML = "";
+      qualityOptions.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `pill ${state.quality === item.value ? "active" : ""}`;
+        const popularTag = item.value === popularQuality ? `<span class="count-popular-tag">🔥</span>` : "";
+        button.innerHTML = `${item.label}${popularTag}`;
+        button.addEventListener("click", () => {
+          state.quality = item.value;
+          render();
+        });
+        root.appendChild(button);
+      });
+    }
+
+    function renderUdpTiles() {
+      const root = document.getElementById("udpTiles");
+      root.innerHTML = "";
+      udpOptions.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `pill ${state.udp === item.value ? "active" : ""}`;
+        button.textContent = item.label;
+        button.addEventListener("click", () => {
+          state.udp = item.value;
+          render();
+        });
+        root.appendChild(button);
+      });
+    }
+
+    function renderDurationTiles() {
+      const root = document.getElementById("durationTiles");
+      const popularDuration = "30";
+      root.innerHTML = "";
+      durationOptions.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `pill ${state.duration === item.value ? "active" : ""}`;
+        const popularTag = item.value === popularDuration ? `<span class="count-popular-tag">🔥</span>` : "";
+        button.innerHTML = `${item.label}${popularTag}`;
+        button.addEventListener("click", () => {
+          state.duration = item.value;
+          render();
+        });
+        root.appendChild(button);
+      });
+    }
+
+    function renderBandwidthTiles() {
+      const root = document.getElementById("bandwidthTiles");
+      const popularBandwidth = "1000";
+      root.innerHTML = "";
+      bandwidthOptions.forEach(item => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `pill ${state.bandwidth === item.value ? "active" : ""}`;
+        const popularTag = item.value === popularBandwidth ? `<span class="count-popular-tag">🔥</span>` : "";
+        button.innerHTML = `${item.label}${popularTag}`;
+        button.addEventListener("click", () => {
+          state.bandwidth = item.value;
+          render();
+        });
+        root.appendChild(button);
+      });
+    }
+
+    function selectedSegmentItems() {
+      return state.selectedSegments
+        .map(id => cSegmentPool.find(item => item.id === id))
+        .filter(Boolean);
+    }
+
+    function segmentQuantityFor(id) {
+      return Math.max(0, Math.floor(Number(state.segmentQuantities[id] || 0)));
+    }
+
+    function activeSegmentPurchases() {
+      return selectedSegmentItems()
+        .map(item => ({ item, qty: segmentQuantityFor(item.id) }))
+        .filter(entry => entry.qty > 0);
+    }
+
+    function syncProxyCountFromSegments() {
+      const count = activeSegmentPurchases().reduce((sum, entry) => sum + entry.qty, 0);
+      state.proxyCount = count;
+      state.customCount = String(count);
+      state.countMode = "custom";
+    }
+
+    function segmentCountryDistribution() {
+      const counter = {};
+      activeSegmentPurchases().forEach(({ item, qty }) => {
+        if (!counter[item.countryCode]) {
+          counter[item.countryCode] = {
+            code: item.countryCode,
+            qty: 0,
+            segments: 0,
+            ...countryMeta[item.countryCode]
+          };
+        }
+        counter[item.countryCode].qty += qty;
+        counter[item.countryCode].segments += 1;
+      });
+      return Object.values(counter).sort((a, b) => b.qty - a.qty || a.name.localeCompare(b.name));
+    }
+
+    function groupInventoryByCountryCity(items) {
+      const countryGroups = {};
+      items.forEach(item => {
+        if (!countryGroups[item.countryCode]) {
+          countryGroups[item.countryCode] = {
+            countryCode: item.countryCode,
+            countryName: item.countryName,
+            icon: item.icon,
+            cityMap: {}
+          };
+        }
+        const cityId = item.cityId || "unknown";
+        if (!countryGroups[item.countryCode].cityMap[cityId]) {
+          countryGroups[item.countryCode].cityMap[cityId] = {
+            cityId,
+            cityName: item.cityName || "Unknown",
+            items: []
+          };
+        }
+        countryGroups[item.countryCode].cityMap[cityId].items.push(item);
+      });
+      return Object.values(countryGroups)
+        .map(group => ({
+          ...group,
+          cities: Object.values(group.cityMap).sort((a, b) => a.cityName.localeCompare(b.cityName))
+        }))
+        .sort((a, b) => a.countryName.localeCompare(b.countryName));
+    }
+
+    function selectedSegmentGroups() {
+      return groupInventoryByCountryCity(selectedSegmentItems())
+        .map(group => ({
+          ...group,
+          cities: group.cities.map(cityGroup => ({
+            ...cityGroup,
+            items: cityGroup.items.sort((a, b) => segmentQuantityFor(b.id) - segmentQuantityFor(a.id) || a.cidr.localeCompare(b.cidr))
+          }))
+        }));
+    }
+
+    function syncProxyCountFromSpecifiedIps() {
+      const count = state.selectedSpecifiedIps.length;
+      state.proxyCount = count;
+      state.customCount = String(count);
+      state.countMode = "custom";
+    }
+
+    function specifiedAllocations() {
+      const counter = {};
+      state.selectedSpecifiedIps.forEach(id => {
+        const found = specifiedIpPool.find(item => item.id === id);
+        if (!found) return;
+        counter[found.countryCode] = (counter[found.countryCode] || 0) + 1;
+      });
+      return Object.entries(counter).map(([code, qty]) => ({
+        code,
+        qty,
+        ...countryMeta[code]
+      }));
+    }
+
+    function selectedSpecifiedGroups() {
+      const selected = state.selectedSpecifiedIps
+        .map(id => specifiedIpPool.find(entry => entry.id === id))
+        .filter(Boolean);
+      return groupInventoryByCountryCity(selected);
+    }
+
+    function selectedTagMarkup(item, withIcon = true, includeCity = false) {
+      return `
+        <span class="selected-ip-tag">
+          ${withIcon ? `${item.icon} ` : ""}${item.ip}${includeCity ? ` · ${item.cityName}` : ""}
+          <button data-remove-id="${item.id}" type="button">×</button>
+        </span>
+      `;
+    }
+
+    function selectedSegmentTagMarkup(item, quantity, withIcon = true, includeCity = false) {
+      return `
+        <span class="selected-ip-tag ${quantity > 0 ? "" : "weak"}">
+          ${withIcon ? `${item.icon} ` : ""}${item.cidr}${includeCity ? ` · ${item.cityName}` : ""} · ${quantity}
+          <button data-remove-segment-id="${item.id}" type="button">×</button>
+        </span>
+      `;
+    }
+
+    function visibleSelectedTagCount(items, containerWidth, markupFn) {
+      if (!items.length || containerWidth <= 0) return items.length;
+      const measureHost = document.createElement("div");
+      measureHost.style.position = "absolute";
+      measureHost.style.visibility = "hidden";
+      measureHost.style.pointerEvents = "none";
+      measureHost.style.left = "-9999px";
+      measureHost.style.top = "0";
+      measureHost.style.display = "inline-flex";
+      measureHost.style.gap = "8px";
+      measureHost.style.whiteSpace = "nowrap";
+      document.body.appendChild(measureHost);
+
+      let used = 0;
+      let count = 0;
+      items.forEach(item => {
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = markupFn(item).trim();
+        const tag = wrapper.firstElementChild;
+        measureHost.appendChild(tag);
+        const width = tag.getBoundingClientRect().width;
+        const next = count === 0 ? width : used + 8 + width;
+        if (next <= containerWidth) {
+          used = next;
+          count += 1;
+        }
+        measureHost.removeChild(tag);
+      });
+      document.body.removeChild(measureHost);
+      return count;
+    }
+
+    function segmentQueryResult() {
+      const keyword = state.segmentKeyword.trim().toLowerCase();
+      let list = cSegmentPool.filter(item =>
+        inventoryLocationMatches(item, state.segmentLocationDimension, state.segmentCountryFilter, state.segmentCityFilter) &&
+        (!keyword || item.cidr.toLowerCase().includes(keyword))
+      );
+      list = list.sort((a, b) => {
+        if (state.segmentSortMode === "priceAsc") return a.pricePerIp - b.pricePerIp || b.availableCount - a.availableCount;
+        if (state.segmentSortMode === "priceDesc") return b.pricePerIp - a.pricePerIp || b.availableCount - a.availableCount;
+        if (state.segmentSortMode === "stockAsc") return a.availableCount - b.availableCount || a.pricePerIp - b.pricePerIp;
+        return b.availableCount - a.availableCount || a.pricePerIp - b.pricePerIp;
+      });
+      const total = list.length;
+      const totalPages = Math.max(1, Math.ceil(total / cSegmentPageSize));
+      if (state.segmentPage > totalPages) state.segmentPage = totalPages;
+      const start = (state.segmentPage - 1) * cSegmentPageSize;
+      return {
+        list: list.slice(start, start + cSegmentPageSize),
+        total,
+        totalPages
+      };
+    }
+
+    function removeSelectedSegment(id) {
+      state.selectedSegments = state.selectedSegments.filter(item => item !== id);
+      delete state.segmentQuantities[id];
+      if (!state.selectedSegments.length) state.segmentSelectionExpanded = false;
+      syncProxyCountFromSegments();
+    }
+
+    function clearSelectedSegmentsByCountry(code) {
+      state.selectedSegments
+        .filter(id => {
+          const found = cSegmentPool.find(item => item.id === id);
+          return found && found.countryCode === code;
+        })
+        .forEach(id => delete state.segmentQuantities[id]);
+      state.selectedSegments = state.selectedSegments.filter(id => {
+        const found = cSegmentPool.find(item => item.id === id);
+        return !found || found.countryCode !== code;
+      });
+      if (!state.selectedSegments.length) state.segmentSelectionExpanded = false;
+      syncProxyCountFromSegments();
+    }
+
+    function setSegmentQuantity(id, rawValue) {
+      const item = cSegmentPool.find(entry => entry.id === id);
+      if (!item) return;
+      const nextValue = Math.max(0, Math.min(item.availableCount, Math.floor(Number(rawValue || 0))));
+      state.segmentQuantities[id] = nextValue;
+      syncProxyCountFromSegments();
+    }
+
+    function renderSegmentPurchasePicker() {
+      const panel = document.getElementById("segmentPurchasePicker");
+      if (state.sourceMode !== "cSegment") {
+        panel.style.display = "none";
+        return;
+      }
+      panel.style.display = "grid";
+      document.getElementById("segmentCountryFilter").value = state.segmentCountryFilter;
+      renderInventoryLocationControls("segment");
+      document.getElementById("segmentKeyword").value = state.segmentKeyword;
+      document.getElementById("segmentSortMode").value = state.segmentSortMode;
+
+      const tagsRoot = document.getElementById("selectedSegmentTags");
+      const expandBtn = document.getElementById("selectedSegmentExpandBtn");
+      const selectedPanel = document.getElementById("selectedSegmentPanel");
+      const selected = selectedSegmentItems();
+
+      if (!selected.length) {
+        tagsRoot.innerHTML = `<span class="hint">尚未选择 IP 段。</span>`;
+        expandBtn.classList.remove("visible");
+        selectedPanel.className = "selected-ip-panel";
+        selectedPanel.innerHTML = "";
+      } else {
+        const summaryWidth = Math.floor(tagsRoot.parentElement.getBoundingClientRect().width || tagsRoot.getBoundingClientRect().width || 0);
+        const visibleCount = visibleSelectedTagCount(
+          selected,
+          summaryWidth,
+          item => selectedSegmentTagMarkup(item, segmentQuantityFor(item.id), true)
+        );
+        const visibleItems = selected.slice(0, visibleCount);
+        const hiddenCount = Math.max(0, selected.length - visibleItems.length);
+        tagsRoot.innerHTML = visibleItems.map(item => selectedSegmentTagMarkup(item, segmentQuantityFor(item.id), true)).join("");
+        requestAnimationFrame(() => {
+          if (!hiddenCount && state.segmentSelectionExpanded) {
+            state.segmentSelectionExpanded = false;
+            render();
+            return;
+          }
+          expandBtn.classList.toggle("visible", hiddenCount > 0);
+          expandBtn.textContent = state.segmentSelectionExpanded ? `收起 (${selected.length})` : `展开 (${selected.length})`;
+        });
+        const groups = selectedSegmentGroups();
+        selectedPanel.className = `selected-ip-panel ${state.segmentSelectionExpanded ? "open" : ""}`;
+        selectedPanel.innerHTML = state.segmentSelectionExpanded ? `
+          <div class="selected-ip-panel-head">
+            <span>已选 IP 段明细</span>
+            <button id="selectedSegmentCollapseBtn" class="text-btn" type="button">收起</button>
+          </div>
+          ${groups.map(group => {
+            const groupCount = group.cities.reduce((sum, cityGroup) => sum + cityGroup.items.length, 0);
+            return `
+            <div class="selected-ip-group">
+              <div class="selected-ip-group-head">
+                <div class="selected-ip-group-title">
+                  <span>${group.icon}</span>
+                  <span>${group.countryName} (${group.countryCode})</span>
+                  <span class="selected-ip-group-count">${groupCount} 段选中</span>
+                </div>
+                <button class="text-btn" data-clear-segment-country="${group.countryCode}" type="button">清空</button>
+              </div>
+              ${group.cities.map(cityGroup => `
+                <div class="selected-ip-city-group">
+                  <div class="selected-ip-city-head">
+                    <span>${cityGroup.cityName}</span>
+                    <span>${cityGroup.items.length} 段</span>
+                  </div>
+                  <div class="selected-ip-group-tags">
+                    ${cityGroup.items.map(item => selectedSegmentTagMarkup(item, segmentQuantityFor(item.id), false, false)).join("")}
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          `;
+          }).join("")}
+        ` : "";
+      }
+
+      tagsRoot.querySelectorAll("button[data-remove-segment-id]").forEach(button => {
+        button.addEventListener("click", () => {
+          removeSelectedSegment(button.dataset.removeSegmentId);
+          render();
+        });
+      });
+      expandBtn.onclick = () => {
+        state.segmentSelectionExpanded = !state.segmentSelectionExpanded;
+        render();
+      };
+      selectedPanel.querySelectorAll("button[data-remove-segment-id]").forEach(button => {
+        button.addEventListener("click", () => {
+          removeSelectedSegment(button.dataset.removeSegmentId);
+          render();
+        });
+      });
+      selectedPanel.querySelectorAll("button[data-clear-segment-country]").forEach(button => {
+        button.addEventListener("click", () => {
+          clearSelectedSegmentsByCountry(button.dataset.clearSegmentCountry);
+          render();
+        });
+      });
+      const collapseBtn = document.getElementById("selectedSegmentCollapseBtn");
+      if (collapseBtn) {
+        collapseBtn.addEventListener("click", () => {
+          state.segmentSelectionExpanded = false;
+          render();
+        });
+      }
+
+      const query = segmentQueryResult();
+      const listRoot = document.getElementById("segmentPurchaseResults");
+      if (!query.list.length) {
+        listRoot.innerHTML = state.segmentLocationDimension === "city" && (state.segmentCountryFilter === "ALL" || !state.segmentCityFilter)
+          ? `<div class="empty-state">请先选择国家和城市，再查看该城市下的可采购 IP 段。</div>`
+          : `<div class="empty-state">当前条件下无可采购 IP 段，请调整筛选条件。</div>`;
+      } else {
+        listRoot.innerHTML = query.list.map(item => {
+          const checked = state.selectedSegments.includes(item.id);
+          const quantity = segmentQuantityFor(item.id);
+          return `
+            <div class="segment-item ${checked ? "selected" : ""} ${checked && quantity === 0 ? "pending" : ""}" data-segment-id="${item.id}">
+              <div class="segment-item-top">
+                <div class="segment-cidr">${item.cidr}</div>
+                <span class="specified-ip-check">✓</span>
+              </div>
+              <div class="segment-meta">
+                <span class="flag-slot">
+                  ${item.icon}
+                  <span class="country-hover">${item.countryName} / ${item.cityName} · ${item.countryCode}</span>
+                </span>
+                <span class="specified-ip-code">${item.countryCode}</span>
+                <span class="specified-ip-code">${item.cityName}</span>
+                <span class="price-text">${money(item.pricePerIp)}/IP</span>
+                <span class="segment-stock">${item.availableCount}条</span>
+              </div>
+              ${checked ? `
+                <div class="segment-qty-row">
+                  <div class="segment-qty-box">
+                    <button class="segment-step" type="button" data-step-segment="${item.id}" data-step="-1" ${quantity <= 0 ? "disabled" : ""}>−</button>
+                    <input class="segment-qty-input" data-segment-qty="${item.id}" type="number" min="0" max="${item.availableCount}" step="1" name="segment-qty-${item.id}" aria-label="${item.cidr} 购买数量" value="${quantity}">
+                    <button class="segment-step" type="button" data-step-segment="${item.id}" data-step="1" ${quantity >= item.availableCount ? "disabled" : ""}>+</button>
+                  </div>
+                  <span class="segment-qty-caption">上限 ${item.availableCount}</span>
+                </div>
+              ` : ``}
+            </div>
+          `;
+        }).join("");
+      }
+
+      listRoot.querySelectorAll(".segment-item[data-segment-id]").forEach(itemNode => {
+        itemNode.addEventListener("click", event => {
+          if (event.target.closest(".segment-qty-box")) return;
+          const id = itemNode.dataset.segmentId;
+          if (!id) return;
+          if (state.selectedSegments.includes(id)) {
+            removeSelectedSegment(id);
+          } else {
+            state.selectedSegments.push(id);
+            state.segmentQuantities[id] = segmentQuantityFor(id);
+            syncProxyCountFromSegments();
+          }
+          render();
+          if (!state.selectedSegments.includes(id)) return;
+          requestAnimationFrame(() => {
+            const input = document.querySelector(`input[data-segment-qty="${id}"]`);
+            if (input) input.focus();
+          });
+        });
+      });
+
+      listRoot.querySelectorAll("button[data-step-segment]").forEach(button => {
+        button.addEventListener("click", event => {
+          event.stopPropagation();
+          const id = button.dataset.stepSegment;
+          const step = Number(button.dataset.step || 0);
+          setSegmentQuantity(id, segmentQuantityFor(id) + step);
+          render();
+        });
+      });
+
+      listRoot.querySelectorAll("input[data-segment-qty]").forEach(input => {
+        input.addEventListener("click", event => event.stopPropagation());
+        input.addEventListener("input", event => {
+          const id = event.target.dataset.segmentQty;
+          setSegmentQuantity(id, event.target.value);
+          render();
+          requestAnimationFrame(() => {
+            const nextInput = document.querySelector(`input[data-segment-qty="${id}"]`);
+            if (!nextInput) return;
+            nextInput.focus();
+            const length = nextInput.value.length;
+            nextInput.setSelectionRange(length, length);
+          });
+        });
+        input.addEventListener("change", event => {
+          setSegmentQuantity(event.target.dataset.segmentQty, event.target.value);
+          render();
+        });
+      });
+
+      const pagination = document.getElementById("segmentPurchasePagination");
+      pagination.innerHTML = "";
+      const prev = document.createElement("button");
+      prev.type = "button";
+      prev.className = "page-btn";
+      prev.textContent = "‹";
+      prev.disabled = state.segmentPage === 1;
+      prev.addEventListener("click", () => {
+        state.segmentPage = Math.max(1, state.segmentPage - 1);
+        render();
+      });
+      pagination.appendChild(prev);
+
+      for (let i = 1; i <= query.totalPages; i += 1) {
+        const pageBtn = document.createElement("button");
+        pageBtn.type = "button";
+        pageBtn.className = `page-btn ${i === state.segmentPage ? "active" : ""}`;
+        pageBtn.textContent = String(i);
+        pageBtn.addEventListener("click", () => {
+          state.segmentPage = i;
+          render();
+        });
+        pagination.appendChild(pageBtn);
+      }
+
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "page-btn";
+      next.textContent = "›";
+      next.disabled = state.segmentPage >= query.totalPages;
+      next.addEventListener("click", () => {
+        state.segmentPage = Math.min(query.totalPages, state.segmentPage + 1);
+        render();
+      });
+      pagination.appendChild(next);
+    }
+
+    function specifiedQueryResult() {
+      const keyword = state.specifiedKeyword.trim().toLowerCase();
+      let list = specifiedIpPool.filter(item =>
+        inventoryLocationMatches(item, state.specifiedLocationDimension, state.specifiedCountryFilter, state.specifiedCityFilter) &&
+        (!keyword || item.ip.toLowerCase().includes(keyword))
+      );
+      list = list.sort((a, b) => state.specifiedPriceSort === "asc" ? a.pricePerIp - b.pricePerIp : b.pricePerIp - a.pricePerIp);
+      const total = list.length;
+      const totalPages = Math.max(1, Math.ceil(total / specifiedIpPageSize));
+      if (state.specifiedIpPage > totalPages) state.specifiedIpPage = totalPages;
+      const start = (state.specifiedIpPage - 1) * specifiedIpPageSize;
+      return {
+        list: list.slice(start, start + specifiedIpPageSize),
+        total,
+        totalPages
+      };
+    }
+
+    function renderSpecifiedIpPicker() {
+      const panel = document.getElementById("specifiedIpPicker");
+      if (state.sourceMode !== "specifiedIp") {
+        panel.style.display = "none";
+        return;
+      }
+      panel.style.display = "grid";
+      document.getElementById("specifiedCountryFilter").value = state.specifiedCountryFilter;
+      renderInventoryLocationControls("specified");
+      document.getElementById("specifiedKeyword").value = state.specifiedKeyword;
+      document.getElementById("specifiedPriceSort").value = state.specifiedPriceSort;
+
+      const tagsRoot = document.getElementById("selectedSpecifiedTags");
+      const expandBtn = document.getElementById("selectedIpExpandBtn");
+      const selectedPanel = document.getElementById("selectedSpecifiedPanel");
+      const selected = state.selectedSpecifiedIps
+        .map(id => specifiedIpPool.find(item => item.id === id))
+        .filter(Boolean);
+      if (!selected.length) {
+        tagsRoot.innerHTML = `<span class="hint">尚未选择 IP。</span>`;
+        expandBtn.classList.remove("visible");
+        selectedPanel.className = "selected-ip-panel";
+        selectedPanel.innerHTML = "";
+      } else {
+        const summaryWidth = Math.floor(tagsRoot.parentElement.getBoundingClientRect().width || tagsRoot.getBoundingClientRect().width || 0);
+        const visibleCount = visibleSelectedTagCount(selected, summaryWidth, item => selectedTagMarkup(item, true));
+        const visibleItems = selected.slice(0, visibleCount);
+        const hiddenCount = Math.max(0, selected.length - visibleItems.length);
+        tagsRoot.innerHTML = visibleItems.map(item => selectedTagMarkup(item, true)).join("");
+        requestAnimationFrame(() => {
+          if (!hiddenCount && state.specifiedSelectionExpanded) {
+            state.specifiedSelectionExpanded = false;
+            render();
+            return;
+          }
+          expandBtn.classList.toggle("visible", hiddenCount > 0);
+          expandBtn.textContent = state.specifiedSelectionExpanded ? `收起 (${selected.length})` : `展开 (${selected.length})`;
+        });
+        const groups = selectedSpecifiedGroups();
+        selectedPanel.className = `selected-ip-panel ${state.specifiedSelectionExpanded ? "open" : ""}`;
+        selectedPanel.innerHTML = state.specifiedSelectionExpanded ? `
+          <div class="selected-ip-panel-head">
+            <span>已选 IP 明细</span>
+            <button id="selectedIpCollapseBtn" class="text-btn" type="button">收起</button>
+          </div>
+          ${groups.map(group => {
+            const groupCount = group.cities.reduce((sum, cityGroup) => sum + cityGroup.items.length, 0);
+            return `
+            <div class="selected-ip-group">
+              <div class="selected-ip-group-head">
+                <div class="selected-ip-group-title">
+                  <span>${group.icon}</span>
+                  <span>${group.countryName} (${group.countryCode})</span>
+                  <span class="selected-ip-group-count">${groupCount} 条选中</span>
+                </div>
+                <button class="text-btn" data-clear-country="${group.countryCode}" type="button">清空</button>
+              </div>
+              ${group.cities.map(cityGroup => `
+                <div class="selected-ip-city-group">
+                  <div class="selected-ip-city-head">
+                    <span>${cityGroup.cityName}</span>
+                    <span>${cityGroup.items.length} 条</span>
+                  </div>
+                  <div class="selected-ip-group-tags">
+                    ${cityGroup.items.map(item => selectedTagMarkup(item, false, false)).join("")}
+                  </div>
+                </div>
+              `).join("")}
+            </div>
+          `;
+          }).join("")}
+        ` : "";
+      }
+      tagsRoot.querySelectorAll("button[data-remove-id]").forEach(button => {
+        button.addEventListener("click", () => {
+          state.selectedSpecifiedIps = state.selectedSpecifiedIps.filter(id => id !== button.dataset.removeId);
+          if (!state.selectedSpecifiedIps.length) state.specifiedSelectionExpanded = false;
+          syncProxyCountFromSpecifiedIps();
+          render();
+        });
+      });
+      expandBtn.onclick = () => {
+        state.specifiedSelectionExpanded = !state.specifiedSelectionExpanded;
+        render();
+      };
+      selectedPanel.querySelectorAll("button[data-remove-id]").forEach(button => {
+        button.addEventListener("click", () => {
+          state.selectedSpecifiedIps = state.selectedSpecifiedIps.filter(id => id !== button.dataset.removeId);
+          if (!state.selectedSpecifiedIps.length) state.specifiedSelectionExpanded = false;
+          syncProxyCountFromSpecifiedIps();
+          render();
+        });
+      });
+      selectedPanel.querySelectorAll("button[data-clear-country]").forEach(button => {
+        button.addEventListener("click", () => {
+          const code = button.dataset.clearCountry;
+          state.selectedSpecifiedIps = state.selectedSpecifiedIps.filter(id => {
+            const item = specifiedIpPool.find(entry => entry.id === id);
+            return item && item.countryCode !== code;
+          });
+          if (!state.selectedSpecifiedIps.length) state.specifiedSelectionExpanded = false;
+          syncProxyCountFromSpecifiedIps();
+          render();
+        });
+      });
+      const collapseBtn = document.getElementById("selectedIpCollapseBtn");
+      if (collapseBtn) {
+        collapseBtn.addEventListener("click", () => {
+          state.specifiedSelectionExpanded = false;
+          render();
+        });
+      }
+
+      const query = specifiedQueryResult();
+      const listRoot = document.getElementById("specifiedIpResults");
+      if (!query.list.length) {
+        listRoot.innerHTML = state.specifiedLocationDimension === "city" && (state.specifiedCountryFilter === "ALL" || !state.specifiedCityFilter)
+          ? `<div class="empty-state">请先选择国家和城市，再查看该城市下的可用 IP。</div>`
+          : `<div class="empty-state">当前条件下无可用 IP，请调整筛选条件。</div>`;
+      } else {
+        listRoot.innerHTML = query.list.map(item => {
+          const checked = state.selectedSpecifiedIps.includes(item.id);
+          return `
+            <div class="specified-ip-item ${checked ? "selected" : ""}" data-ip-id="${item.id}">
+              <div class="specified-ip-top">
+                <span class="flag-slot">
+                  ${item.icon}
+                  <span class="country-hover">${item.countryName} / ${item.cityName} · ${item.countryCode}</span>
+                </span>
+                <div class="ip-text">${item.ip}</div>
+                <span class="specified-ip-check">✓</span>
+              </div>
+              <div class="specified-ip-meta">
+                <span class="specified-ip-code">${item.countryCode}</span>
+                <span class="specified-ip-code">${item.cityName}</span>
+                <div class="price-text">${money(item.pricePerIp)}/IP</div>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      listRoot.querySelectorAll(".specified-ip-item[data-ip-id]").forEach(itemNode => {
+        itemNode.addEventListener("click", () => {
+          const id = itemNode.dataset.ipId;
+          if (!id) return;
+          if (state.selectedSpecifiedIps.includes(id)) {
+            state.selectedSpecifiedIps = state.selectedSpecifiedIps.filter(item => item !== id);
+          } else {
+            state.selectedSpecifiedIps.push(id);
+          }
+          syncProxyCountFromSpecifiedIps();
+          render();
+        });
+      });
+
+      const pagination = document.getElementById("specifiedIpPagination");
+      pagination.innerHTML = "";
+      const prev = document.createElement("button");
+      prev.type = "button";
+      prev.className = "page-btn";
+      prev.textContent = "‹";
+      prev.disabled = state.specifiedIpPage === 1;
+      prev.addEventListener("click", () => {
+        state.specifiedIpPage = Math.max(1, state.specifiedIpPage - 1);
+        render();
+      });
+      pagination.appendChild(prev);
+
+      for (let i = 1; i <= query.totalPages; i += 1) {
+        const pageBtn = document.createElement("button");
+        pageBtn.type = "button";
+        pageBtn.className = `page-btn ${i === state.specifiedIpPage ? "active" : ""}`;
+        pageBtn.textContent = String(i);
+        pageBtn.addEventListener("click", () => {
+          state.specifiedIpPage = i;
+          render();
+        });
+        pagination.appendChild(pageBtn);
+      }
+
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "page-btn";
+      next.textContent = "›";
+      next.disabled = state.specifiedIpPage >= query.totalPages;
+      next.addEventListener("click", () => {
+        state.specifiedIpPage = Math.min(query.totalPages, state.specifiedIpPage + 1);
+        render();
+      });
+      pagination.appendChild(next);
+    }
+
+    function randomAllocationRows() {
+      const rows = [];
+      if (randomRemainder() > 0) {
+        rows.push({ type: "global", key: "global", icon: "↔", name: "全球随机", qty: randomRemainder(), locked: true });
+      }
+      continentOptions.forEach(continent => {
+        const qty = Number(allocationBucket("continents")[continent] || 0);
+        if (qty > 0) rows.push({ type: "continents", key: continent, icon: "◎", name: `${continent} 随机`, qty });
+      });
+      Object.entries(countryMeta)
+        .sort((a, b) => a[1].name.localeCompare(b[1].name))
+        .forEach(([code, meta]) => {
+          const qty = Number(allocationBucket("countries")[code] || 0);
+          if (qty > 0) rows.push({ type: "countries", key: code, icon: meta.icon, name: `${meta.name} 随机`, qty });
+        });
+      Object.entries(allocationBucket("cities")).forEach(([key, qty]) => {
+        if (!Number(qty || 0)) return;
+        const [code, cityId] = key.split(":");
+        const city = (cityInventory[code] || []).find(item => item.id === cityId);
+        if (!city) return;
+        rows.push({
+          type: "cities",
+          key,
+          icon: countryMeta[code].icon,
+          name: `${countryMeta[code].name} / ${city.name}`,
+          qty: Number(qty)
+        });
+      });
+      return rows;
+    }
+
+    function removeAllocation(type, key) {
+      if (state.allocations[type]) delete state.allocations[type][key];
+      state.allocationError = "";
+      render();
+    }
+
+    function allocationCard({ kind, title, subtitle, badge, value, available, selected, inputAttrs }) {
+      return `
+        <div class="country ${kind === "scope" ? "scope-random" : ""} ${kind === "city" ? "city-card" : ""} ${selected ? "selected" : ""}">
+          <div class="country-top">
+            <div>
+              <div class="scope-type">${kind === "scope" ? "随机范围" : "固定城市"}</div>
+              <div class="country-name">${title}</div>
+              <div class="available">${subtitle}<br>${available.toLocaleString()} 可用</div>
+            </div>
+            <span class="badge">${badge}</span>
+          </div>
+          <label class="allocation-card-input">
+            数量
+            <input type="number" min="0" step="1" name="allocation-${kind}-${badge}" aria-label="${title} 数量" value="${value}" ${inputAttrs}>
+          </label>
+        </div>
+      `;
+    }
+
+    function renderAllocationToolbar() {
+      const toolbar = document.getElementById("allocationToolbar");
+      if (state.sourceMode !== "random") {
+        toolbar.innerHTML = "";
+        return;
+      }
+      const dimensionButtons = `
+        <div class="pill-row allocation-dimension-row">
+          <button class="pill ${state.allocationDimension === "country" ? "active" : ""}" type="button" data-allocation-dimension="country">国家</button>
+          <button class="pill ${state.allocationDimension === "city" ? "active" : ""}" type="button" data-allocation-dimension="city">城市</button>
+        </div>
+      `;
+      const controls = state.allocationDimension === "country" ? `
+        <div class="filter-row">
+          <div class="pill-row">
+            <button class="pill ${state.allocationContinent === "ALL" ? "active" : ""}" type="button" data-continent="ALL">全部</button>
+            ${continentOptions.map(continent => `<button class="pill ${state.allocationContinent === continent ? "active" : ""}" type="button" data-continent="${continent}">${continent}</button>`).join("")}
+          </div>
+          <input id="allocationCountrySearch" class="country-search" type="text" placeholder="搜索国家 / 代码" value="${state.allocationCountrySearch}">
+        </div>
+      ` : `
+        <div class="allocation-controls">
+          <div class="allocation-subhead">
+            <span>通过国家筛选城市</span>
+            <span class="muted">热门国家来自运营配置并过滤城市库存</span>
+          </div>
+          <div class="city-country-row">
+            <div class="city-hot-countries">
+              ${hotCityCountries
+                .filter(code => countryCityTotal(code) > 0)
+                .map(code => `<button class="pill ${state.selectedCityCountry === code ? "active" : ""}" type="button" data-city-country="${code}">${countryMeta[code].icon} ${countryMeta[code].name}</button>`)
+                .join("")}
+            </div>
+            <button class="pill ${state.cityCountryPanelOpen ? "active" : ""}" id="cityCountryMoreBtn" type="button">更多国家</button>
+          </div>
+          ${state.cityCountryPanelOpen ? `
+            <div class="country-panel">
+              <div class="country-panel-head">
+                <span>按大洲选择国家</span>
+                <button class="text-btn" id="cityCountryPanelClose" type="button">收起</button>
+              </div>
+              <div class="filter-row">
+                <div class="pill-row">
+                  <button class="pill ${state.cityCountryPanelContinent === "ALL" ? "active" : ""}" type="button" data-city-panel-continent="ALL">全部</button>
+                  ${continentOptions.map(continent => `<button class="pill ${state.cityCountryPanelContinent === continent ? "active" : ""}" type="button" data-city-panel-continent="${continent}">${continent}</button>`).join("")}
+                </div>
+                <input id="cityCountryPanelSearch" class="country-search" type="text" placeholder="搜索国家 / 代码" value="${state.cityCountryPanelSearch}">
+              </div>
+              <div class="country-panel-grid">
+                ${Object.entries(countryMeta)
+                  .filter(([code, meta]) =>
+                    countryCityTotal(code) > 0 &&
+                    (state.cityCountryPanelContinent === "ALL" || meta.continent === state.cityCountryPanelContinent) &&
+                    (!state.cityCountryPanelSearch.trim() ||
+                      code.toLowerCase().includes(state.cityCountryPanelSearch.trim().toLowerCase()) ||
+                      meta.name.toLowerCase().includes(state.cityCountryPanelSearch.trim().toLowerCase()))
+                  )
+                  .map(([code, meta]) => `<button class="pill ${state.selectedCityCountry === code ? "active" : ""}" type="button" data-city-country="${code}">${meta.icon} ${meta.name}<br><span class="muted">${meta.continent}</span></button>`)
+                  .join("") || `<div class="empty-state">未找到匹配国家。</div>`}
+              </div>
+            </div>
+          ` : ``}
+          <input id="citySearchInput" type="text" placeholder="搜索城市" value="${state.citySearch}">
+        </div>
+      `;
+      toolbar.innerHTML = `${dimensionButtons}${controls}`;
+      toolbar.querySelectorAll("button[data-allocation-dimension]").forEach(button => {
+        button.addEventListener("click", () => {
+          state.allocationDimension = button.dataset.allocationDimension;
+          state.allocationError = "";
+          render();
+        });
+      });
+      toolbar.querySelectorAll("button[data-continent]").forEach(button => {
+        button.addEventListener("click", () => {
+          state.allocationContinent = button.dataset.continent;
+          state.allocationCountryPage = 1;
+          state.allocationError = "";
+          render();
+        });
+      });
+      toolbar.querySelectorAll("button[data-city-country]").forEach(button => {
+        button.addEventListener("click", () => {
+          state.selectedCityCountry = button.dataset.cityCountry;
+          state.citySearch = "";
+          state.cityCountryPanelOpen = false;
+          state.allocationError = "";
+          render();
+        });
+      });
+      const cityCountryMoreBtn = document.getElementById("cityCountryMoreBtn");
+      if (cityCountryMoreBtn) {
+        cityCountryMoreBtn.addEventListener("click", () => {
+          state.cityCountryPanelOpen = !state.cityCountryPanelOpen;
+          render();
+        });
+      }
+      const cityCountryPanelClose = document.getElementById("cityCountryPanelClose");
+      if (cityCountryPanelClose) {
+        cityCountryPanelClose.addEventListener("click", () => {
+          state.cityCountryPanelOpen = false;
+          render();
+        });
+      }
+      toolbar.querySelectorAll("button[data-city-panel-continent]").forEach(button => {
+        button.addEventListener("click", () => {
+          state.cityCountryPanelContinent = button.dataset.cityPanelContinent;
+          render();
+        });
+      });
+      const cityCountryPanelSearch = document.getElementById("cityCountryPanelSearch");
+      if (cityCountryPanelSearch) {
+        cityCountryPanelSearch.addEventListener("input", event => {
+          state.cityCountryPanelSearch = event.target.value;
+          render();
+        });
+      }
+      const countrySearch = document.getElementById("allocationCountrySearch");
+      if (countrySearch) {
+        countrySearch.addEventListener("input", event => {
+          state.allocationCountrySearch = event.target.value;
+          state.allocationCountryPage = 1;
+          render();
+        });
+      }
+      const citySearch = document.getElementById("citySearchInput");
+      if (citySearch) {
+        citySearch.addEventListener("input", event => {
+          state.citySearch = event.target.value;
+          render();
+        });
+      }
+    }
+
+    function renderCountries() {
+      const root = document.getElementById("countryGrid");
+      const title = document.getElementById("allocationSectionTitle");
+      const hint = document.getElementById("allocationSectionHint");
+      const resetBtn = document.getElementById("resetCountries");
+      root.innerHTML = "";
+      title.textContent = state.sourceMode === "random" ? "3. 地区配额" : "3. 来源分布";
+      hint.textContent = state.sourceMode === "cSegment"
+        ? "按段采购模式下，来源分布由已选 IP 段的购买数量自动聚合。"
+        : state.sourceMode === "specifiedIp"
+          ? "指定 IP 模式下，来源分布由已选具体 IP 自动反推。"
+          : "未显式分配的数量进入全球随机；国家和大洲可用量由城市库存聚合。";
+      resetBtn.style.display = state.sourceMode === "random" ? "inline-flex" : "none";
+      renderAllocationToolbar();
+      if (state.sourceMode !== "random") {
+        document.getElementById("countryPagination").innerHTML = "";
+        const distribution = state.sourceMode === "cSegment"
+          ? segmentCountryDistribution()
+          : specifiedAllocations().map(item => ({ code: item.code, qty: item.qty, segments: item.qty, ...countryMeta[item.code] }));
+        document.getElementById("selectedAlert").innerHTML = `
+          <div class="selected-alert-head">
+            <span>来源分布</span>
+            <span>只读反推</span>
+          </div>
+          <div class="selected-chip-row">
+            ${distribution.length
+              ? distribution.map(item => `<span class="selected-chip"><span class="selected-icon">${item.icon}</span> ${item.name} <strong>${item.qty.toLocaleString()}</strong></span>`).join("")
+              : `<span class="selected-chip">当前还没有可反推的来源分布</span>`}
+          </div>
+        `;
+        if (!distribution.length) {
+          root.innerHTML = `<div class="empty-state">当前来源模式下，地区配额不可手动编辑。</div>`;
+          return;
+        }
+        root.innerHTML = distribution.map(item => `
+          <div class="country selected">
+            <div class="country-top">
+              <div>
+                <div class="country-name"><span class="selected-icon">${item.icon}</span> ${item.name}</div>
+                <div class="available">${state.sourceMode === "cSegment" ? `${item.segments} 个已生效 IP 段` : "由已选 IP 反推"}</div>
+              </div>
+              <span class="badge">${item.code}</span>
+            </div>
+            <div class="allocation-qty">${item.qty.toLocaleString()} IPs</div>
+          </div>
+        `).join("");
+        return;
+      }
+
+      renderSelectedCountries();
+      if (state.allocationDimension === "city") {
+        renderCityAllocationCards(root);
+        renderCountryPagination(1, true);
+        return;
+      }
+      renderCountryAllocationCards(root);
+    }
+
+    function renderCountryAllocationCards(root) {
+      const keyword = state.allocationCountrySearch.trim().toLowerCase();
+      let entries = Object.entries(countryMeta).filter(([code, meta]) =>
+        (state.allocationContinent === "ALL" || meta.continent === state.allocationContinent) &&
+        (!keyword || code.toLowerCase().includes(keyword) || meta.name.toLowerCase().includes(keyword))
+      );
+      const cards = [];
+      if (state.allocationContinent !== "ALL") {
+        const value = Number(allocationBucket("continents")[state.allocationContinent] || 0);
+        const available = continentRandomAvailable(state.allocationContinent);
+        cards.push(allocationCard({
+          kind: "scope",
+          title: `${state.allocationContinent} 随机`,
+          subtitle: "大洲下未被国家/城市显式覆盖的城市库存",
+          badge: "CONT",
+          value,
+          available,
+          selected: value > 0,
+          inputAttrs: `data-continent-random="${state.allocationContinent}"`
+        }));
+      }
+      if (!entries.length) {
+        root.innerHTML = `${cards.join("")}<div class="empty-state">未找到匹配国家，请尝试其他关键词。</div>`;
+        renderCountryPagination(1, true);
+        return;
+      }
+      const totalPages = Math.max(1, Math.ceil(entries.length / countryPageSize));
+      if (state.allocationCountryPage > totalPages) state.allocationCountryPage = totalPages;
+      const start = (state.allocationCountryPage - 1) * countryPageSize;
+      entries.slice(start, start + countryPageSize).forEach(([code, meta]) => {
+        const value = Number(allocationBucket("countries")[code] || 0);
+        cards.push(allocationCard({
+          kind: "scope",
+          title: `${meta.icon} ${meta.name} 随机`,
+          subtitle: `城市聚合库存；已排除该国家下具体城市`,
+          badge: code,
+          value,
+          available: countryRandomAvailable(code),
+          selected: value > 0,
+          inputAttrs: `data-country-random="${code}"`
+        }));
+      });
+      root.innerHTML = cards.join("");
+      root.querySelectorAll("input[data-continent-random]").forEach(input => {
+        input.addEventListener("change", event => setContinentAllocation(event.target.dataset.continentRandom, event.target.value));
+      });
+      root.querySelectorAll("input[data-country-random]").forEach(input => {
+        input.addEventListener("change", event => setCountry(event.target.dataset.countryRandom, event.target.value));
+      });
+      renderCountryPagination(totalPages, false);
+    }
+
+    function renderCityAllocationCards(root) {
+      const code = state.selectedCityCountry;
+      const meta = countryMeta[code];
+      const keyword = state.citySearch.trim().toLowerCase();
+      const cities = (cityInventory[code] || []).filter(city => !keyword || city.name.toLowerCase().includes(keyword));
+      const countryValue = Number(allocationBucket("countries")[code] || 0);
+      const cards = [allocationCard({
+        kind: "scope",
+        title: `${meta.icon} ${meta.name} 随机`,
+        subtitle: "城市列表首项，与国家维度同一国家随机项双向绑定",
+        badge: code,
+        value: countryValue,
+        available: countryRandomAvailable(code),
+        selected: countryValue > 0,
+        inputAttrs: `data-country-random="${code}"`
+      })];
+      if (!cities.length) {
+        root.innerHTML = `${cards.join("")}<div class="empty-state">未找到匹配城市，请尝试其他关键词。</div>`;
+      } else {
+        cities.forEach(city => {
+          const key = cityKey(code, city.id);
+          const value = Number(allocationBucket("cities")[key] || 0);
+          cards.push(allocationCard({
+            kind: "city",
+            title: `${meta.icon} ${meta.name} / ${city.name}`,
+            subtitle: "固定到具体城市；订单快照保存 countryCode + cityId",
+            badge: city.id.toUpperCase(),
+            value,
+            available: city.available,
+            selected: value > 0,
+            inputAttrs: `data-city-country="${code}" data-city-id="${city.id}"`
+          }));
+        });
+        root.innerHTML = cards.join("");
+      }
+      root.querySelectorAll("input[data-country-random]").forEach(input => {
+        input.addEventListener("change", event => setCountry(event.target.dataset.countryRandom, event.target.value));
+      });
+      root.querySelectorAll("input[data-city-id]").forEach(input => {
+        input.addEventListener("change", event => setCityAllocation(event.target.dataset.cityCountry, event.target.dataset.cityId, event.target.value));
+      });
+    }
+
+    function renderSelectedCountries() {
+      const rows = randomAllocationRows();
+      const chips = rows.map(item => `
+        <span class="selected-chip">
+          <span class="selected-icon">${item.icon}</span>
+          ${item.name} <strong>${item.qty.toLocaleString()}</strong>
+          ${item.locked ? "" : `<button type="button" data-remove-allocation-type="${item.type}" data-remove-allocation-key="${item.key}">×</button>`}
+        </span>
+      `);
+      if (!chips.length) {
+        chips.push(`<span class="selected-chip"><span class="selected-icon">↔</span> 全球随机 <strong>${state.proxyCount.toLocaleString()}</strong></span>`);
+      }
+      document.getElementById("selectedAlert").innerHTML = `
+        <div class="selected-alert-head">
+          <span>地区配额</span>
+          <span>${allocatedTotal().toLocaleString()} / ${state.proxyCount.toLocaleString()} 显式分配</span>
+        </div>
+        <div class="selected-chip-row">${chips.join("")}</div>
+        ${state.allocationError ? `<div class="notice error">${state.allocationError}</div>` : ""}
+      `;
+      document.getElementById("selectedAlert").querySelectorAll("button[data-remove-allocation-type]").forEach(button => {
+        button.addEventListener("click", () => removeAllocation(button.dataset.removeAllocationType, button.dataset.removeAllocationKey));
+      });
+    }
+
+    function renderCountryPagination(totalPages, hidden) {
+      const root = document.getElementById("countryPagination");
+      root.innerHTML = "";
+      if (hidden) return;
+      const previous = document.createElement("button");
+      previous.type = "button";
+      previous.className = "page-btn";
+      previous.textContent = "‹";
+      previous.disabled = state.allocationCountryPage === 1;
+      previous.addEventListener("click", () => {
+        state.allocationCountryPage = Math.max(1, state.allocationCountryPage - 1);
+        render();
+      });
+      root.appendChild(previous);
+
+      for (let page = 1; page <= totalPages; page += 1) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `page-btn ${page === state.allocationCountryPage ? "active" : ""}`;
+        button.textContent = String(page);
+        button.addEventListener("click", () => {
+          state.allocationCountryPage = page;
+          render();
+        });
+        root.appendChild(button);
+      }
+
+      const next = document.createElement("button");
+      next.type = "button";
+      next.className = "page-btn";
+      next.textContent = "›";
+      next.disabled = state.allocationCountryPage === totalPages;
+      next.addEventListener("click", () => {
+        state.allocationCountryPage = Math.min(totalPages, state.allocationCountryPage + 1);
+        render();
+      });
+      root.appendChild(next);
+    }
+
+    function renderSelects() {
+      document.getElementById("useCaseSelect").value = state.useCase;
+      document.getElementById("sourceRandom").classList.toggle("active", state.sourceMode === "random");
+      document.getElementById("sourceCSegment").classList.toggle("active", state.sourceMode === "cSegment");
+      document.getElementById("sourceSpecifiedIp").classList.toggle("active", state.sourceMode === "specifiedIp");
+      document.getElementById("countTiles").style.display = state.sourceMode === "random" ? "grid" : "none";
+      document.getElementById("sourceModeHint").textContent = state.sourceMode === "cSegment"
+        ? "按段采购模式下，直接在 IP 段卡片中填写购买数量；来源分布与总价会同步聚合。"
+        : state.sourceMode === "specifiedIp"
+          ? "指定 IP 模式下，IP 数量由已选具体 IP 条数自动决定。"
+          : "IP 数量决定地区配额池上限；未显式分配的数量进入全球随机。";
+    }
+
+    function renderSummary() {
+      const quoteResult = quote();
+      const allocationRows = state.sourceMode === "random"
+        ? randomAllocationRows()
+        : (state.sourceMode === "specifiedIp"
+          ? specifiedAllocations().map(item => ({ icon: countryMeta[item.code].icon, name: countryMeta[item.code].name, qty: item.qty }))
+          : segmentCountryDistribution().map(item => ({ icon: item.icon, name: item.name, qty: item.qty })));
+      if (!allocationRows.length) {
+        allocationRows.push({ icon: "•", name: "尚未形成来源分布", qty: state.proxyCount });
+      }
+      const distributionLabel = state.sourceMode === "random" ? "地区配额" : "来源分布";
+      const distributionValue = allocationRows.length && !allocationRows[0].name.startsWith("尚未")
+        ? `${allocationRows.length} 项`
+        : "待形成";
+      const rows = [
+        ["独享级别", exclusivityOptions.find(item => item.id === state.exclusivity).title],
+        ["IP 质量", qualityOptions.find(item => item.value === state.quality)?.label || "标准"],
+        ["业务用途", state.useCase ? document.querySelector(`#useCaseSelect option[value="${state.useCase}"]`)?.textContent : "未选择"],
+        ["UDP", state.udp === "on" ? "开启" : "关闭"],
+        ["来源模式", state.sourceMode === "random" ? "随机" : state.sourceMode === "cSegment" ? "按段采购" : "指定 IP"],
+        [distributionLabel, distributionValue],
+        ["IP 数量", `${state.proxyCount.toLocaleString()} IPs`],
+        ["带宽", bandwidthOptions.find(item => item.value === state.bandwidth)?.label || "未选择"],
+        ["连接数", `${state.connectionCount} / IP`],
+        ["购买时长", durationOptions.find(item => item.value === state.duration).label]
+      ];
+      const allocationGrid = `
+        <div class="allocation-grid allocation-grid-head">
+          <span> </span><span>范围</span><span class="allocation-qty">数量</span>
+        </div>
+        <div class="allocation-grid">
+          ${allocationRows.map(item => `
+            <span>${item.icon}</span>
+            <span>${item.name}</span>
+            <span class="allocation-qty">${item.qty.toLocaleString()}</span>
+          `).join("")}
+        </div>
+      `;
+      const summaryHtml = rows.map(([label, value]) => {
+        if (label === distributionLabel) {
+          return `
+            <div class="summary-row">
+              <span class="summary-label">
+                ${label}
+                <button id="allocationInfoBtn" class="summary-info-btn" type="button" aria-label="${state.sourceMode === "random" ? "查看地区分布详情" : "查看来源分布详情"}">i</button>
+              </span>
+              <strong>${value}</strong>
+            </div>
+            <div id="allocationPopover" class="summary-allocation-popover">${allocationGrid}</div>
+          `;
+        }
+        return `<div class="summary-row"><span>${label}</span><strong>${value}</strong></div>`;
+      }).join("");
+      document.getElementById("summaryRows").innerHTML = summaryHtml;
+      const infoBtn = document.getElementById("allocationInfoBtn");
+      if (infoBtn) {
+        infoBtn.addEventListener("click", () => {
+          const panel = document.getElementById("allocationPopover");
+          if (!panel) return;
+          panel.classList.toggle("open");
+        });
+      }
+      document.getElementById("totalPrice").textContent = money(quoteResult.total);
+
+      const errors = validations();
+      const notice = document.getElementById("summaryNotice");
+      if (errors.length) {
+        notice.innerHTML = `<div class="notice error">${errors.join("<br>")}</div>`;
+      } else if (state.bandwidth === "unlimited") {
+        notice.innerHTML = `<div class="notice warn">Unlimited 带宽受公平使用政策约束，最终以订单条款为准。</div>`;
+      } else {
+        notice.innerHTML = `<div class="notice ok">配置有效，可继续进入下一步确认。</div>`;
+      }
+
+      const btn = document.getElementById("continueBtn");
+      btn.disabled = errors.length > 0;
+      btn.textContent = errors.length ? "请先完成必填配置" : "确认配置并继续";
+    }
+
+    function render() {
+      renderExclusivity();
+      renderBandwidthTiles();
+      renderConnectionTiles();
+      renderQualityTiles();
+      renderUdpTiles();
+      renderDurationTiles();
+      renderCountTiles();
+      renderSelects();
+      renderSegmentPurchasePicker();
+      renderSpecifiedIpPicker();
+      renderCountries();
+      renderSummary();
+    }
+
+    function switchSourceMode(nextMode) {
+      if (state.sourceMode === nextMode) return;
+      if (state.sourceMode === "random" && allocatedTotal() > 0) {
+        const confirmed = window.confirm("切换来源模式会清空当前随机地区配额，是否继续？");
+        if (!confirmed) return;
+        clearRandomAllocations();
+      }
+      state.sourceMode = nextMode;
+      if (nextMode === "random") {
+        clearRandomAllocations();
+        if (state.proxyCount < 1) setProxyCount(100);
+      } else if (nextMode === "cSegment") {
+        syncProxyCountFromSegments();
+      } else if (nextMode === "specifiedIp") {
+        syncProxyCountFromSpecifiedIps();
+      }
+      render();
+    }
+
+    document.getElementById("sourceRandom").addEventListener("click", () => switchSourceMode("random"));
+    document.getElementById("sourceCSegment").addEventListener("click", () => switchSourceMode("cSegment"));
+    document.getElementById("sourceSpecifiedIp").addEventListener("click", () => switchSourceMode("specifiedIp"));
+    document.querySelectorAll("button[data-segment-location-dimension]").forEach(button => {
+      button.addEventListener("click", () => {
+        state.segmentLocationDimension = button.dataset.segmentLocationDimension;
+        state.segmentCityFilter = "";
+        state.segmentPage = 1;
+        render();
+      });
+    });
+    document.getElementById("segmentCountryFilter").addEventListener("change", event => {
+      state.segmentCountryFilter = event.target.value;
+      state.segmentCityFilter = "";
+      state.segmentPage = 1;
+      render();
+    });
+    document.getElementById("segmentCityFilter").addEventListener("change", event => {
+      state.segmentCityFilter = event.target.value;
+      state.segmentPage = 1;
+      render();
+    });
+    document.getElementById("segmentKeyword").addEventListener("input", event => {
+      state.segmentKeyword = event.target.value;
+      state.segmentPage = 1;
+      render();
+    });
+    document.getElementById("segmentSortMode").addEventListener("change", event => {
+      state.segmentSortMode = event.target.value;
+      state.segmentPage = 1;
+      render();
+    });
+    document.getElementById("clearSegmentSelection").addEventListener("click", () => {
+      state.selectedSegments = [];
+      state.segmentQuantities = {};
+      syncProxyCountFromSegments();
+      render();
+    });
+    document.querySelectorAll("button[data-specified-location-dimension]").forEach(button => {
+      button.addEventListener("click", () => {
+        state.specifiedLocationDimension = button.dataset.specifiedLocationDimension;
+        state.specifiedCityFilter = "";
+        state.specifiedIpPage = 1;
+        render();
+      });
+    });
+    document.getElementById("specifiedCountryFilter").addEventListener("change", event => {
+      state.specifiedCountryFilter = event.target.value;
+      state.specifiedCityFilter = "";
+      state.specifiedIpPage = 1;
+      render();
+    });
+    document.getElementById("specifiedCityFilter").addEventListener("change", event => {
+      state.specifiedCityFilter = event.target.value;
+      state.specifiedIpPage = 1;
+      render();
+    });
+    document.getElementById("specifiedKeyword").addEventListener("input", event => {
+      state.specifiedKeyword = event.target.value;
+      state.specifiedIpPage = 1;
+      render();
+    });
+    document.getElementById("specifiedPriceSort").addEventListener("change", event => {
+      state.specifiedPriceSort = event.target.value;
+      state.specifiedIpPage = 1;
+      render();
+    });
+    document.getElementById("clearSpecifiedSelection").addEventListener("click", () => {
+      state.selectedSpecifiedIps = [];
+      syncProxyCountFromSpecifiedIps();
+      render();
+    });
+    document.getElementById("useCaseSelect").addEventListener("change", event => {
+      state.useCase = event.target.value;
+      render();
+    });
+    document.getElementById("resetCountries").addEventListener("click", () => {
+      clearRandomAllocations();
+      render();
+    });
+    document.getElementById("continueBtn").addEventListener("click", () => {
+      if (validations().length) return;
+      window.location.href = "./static-residential-post-continue-flow.html";
+    });
+
+    initCountryFilter("segmentCountryFilter", (meta, code) => `${meta.icon} ${meta.name}`);
+    initCountryFilter("specifiedCountryFilter", (meta, code) => `${meta.name} · ${code}`);
+    render();
+  </script>
+</body>
+</html>

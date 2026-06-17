@@ -1,0 +1,9 @@
+{
+  "label": "代理商",
+  "position": 6,
+  "className": "red",
+  "link": {
+    "type": "generated-index",
+    "description": "静态IP代理商"
+  }
+}

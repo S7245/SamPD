@@ -1,0 +1,1347 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>静态代理 · 代理商我的收入与月度账单原型</title>
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --panel-2: #eef3f5;
+      --ink: #202a27;
+      --muted: #65716d;
+      --line: #d8e0e5;
+      --line-strong: #aab7bf;
+      --accent: #16635b;
+      --accent-soft: #deefec;
+      --blue: #205c87;
+      --blue-soft: #e0edf7;
+      --green: #28684e;
+      --green-soft: #dcefe5;
+      --amber: #8a5a00;
+      --amber-soft: #fff2cf;
+      --red: #9e2f25;
+      --red-soft: #ffe1dc;
+      --shadow: 0 16px 36px rgba(25, 35, 43, 0.08);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: var(--sans);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    .app {
+      width: 100%;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 22px 16px;
+      color: #f8f4ec;
+      background: #222a27;
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      border-radius: 7px;
+      background: #2d3935;
+      font-weight: 900;
+    }
+
+    .brand strong,
+    .brand span {
+      display: block;
+    }
+
+    .brand strong {
+      font-size: 15px;
+    }
+
+    .brand span {
+      margin-top: 2px;
+      color: #aebbb6;
+      font-size: 12px;
+    }
+
+    .nav-label {
+      color: #aebbb6;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav a {
+      min-height: 38px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 10px;
+      color: #dce4e0;
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .nav a.active,
+    .nav a:hover {
+      color: #fff;
+      background: #34413d;
+    }
+
+    .nav small {
+      color: #9ba8a3;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .side-note {
+      margin-top: auto;
+      padding: 12px;
+      color: #c6d1cd;
+      background: #2b3532;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 7px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    main {
+      width: 100%;
+      min-width: 0;
+      padding: 26px;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      font-size: 18px;
+    }
+
+    h3 {
+      font-size: 14px;
+    }
+
+    .page-copy {
+      max-width: 850px;
+      margin: 9px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .btn {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 8px 12px;
+      color: var(--ink);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn.ghost {
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-color: #b9d8d2;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .icon {
+      font-family: var(--mono);
+      font-weight: 900;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 18px 0;
+    }
+
+    .metric {
+      min-height: 102px;
+      padding: 15px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 12px;
+      font-family: var(--mono);
+      font-size: 24px;
+      line-height: 1.1;
+    }
+
+    .metric small {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .metric.bad strong {
+      color: var(--red);
+    }
+
+    .callout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 14px;
+      align-items: center;
+      padding: 14px;
+      background: #f0f7f5;
+      border: 1px solid #b9d8d2;
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .callout strong,
+    .callout span {
+      display: block;
+    }
+
+    .callout strong {
+      font-size: 14px;
+    }
+
+    .callout span {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(138px, 1fr)) minmax(190px, 1.2fr) auto auto;
+      gap: 10px;
+      align-items: end;
+      margin-top: 16px;
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .rule-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .rule-card {
+      min-height: 118px;
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-left: 4px solid var(--accent);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .rule-card span,
+    .rule-card p {
+      display: block;
+    }
+
+    .rule-card span {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .rule-card strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 15px;
+    }
+
+    .rule-card p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .field {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      min-height: 36px;
+      padding: 7px 9px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(22, 99, 91, 0.13);
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: minmax(760px, 1fr) minmax(390px, 460px);
+      gap: 16px;
+      margin-top: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 15px;
+      background: #f7f9fa;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      padding: 12px 10px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      color: #51605b;
+      background: var(--panel-2);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      cursor: pointer;
+    }
+
+    tbody tr:hover,
+    tbody tr.selected {
+      background: #f8f5ed;
+    }
+
+    .bill-no {
+      color: var(--accent);
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .subline {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .money {
+      font-family: var(--mono);
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .money.good {
+      color: var(--green);
+    }
+
+    .money.bad {
+      color: var(--red);
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+    .tag {
+      display: inline-flex;
+      min-height: 22px;
+      align-items: center;
+      padding: 3px 7px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tag.green {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .tag.blue {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .tag.amber {
+      color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .tag.red {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .tag.gray {
+      color: #5c625f;
+      background: #ebe6de;
+    }
+
+    .pagination {
+      display: flex;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .drawer {
+      position: sticky;
+      top: 18px;
+      max-height: calc(100vh - 36px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .drawer-head {
+      padding: 15px;
+      color: #fff;
+      background: #222a27;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .drawer-head .bill-no {
+      color: #bfe3dc;
+    }
+
+    .drawer-head h2 {
+      margin-top: 8px;
+      font-size: 18px;
+    }
+
+    .drawer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .drawer-body {
+      overflow: auto;
+      padding: 15px;
+    }
+
+    .detail-section {
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .detail-section:first-child {
+      padding-top: 0;
+    }
+
+    .detail-section:last-child {
+      border-bottom: 0;
+    }
+
+    .detail-section h3 {
+      margin-bottom: 10px;
+    }
+
+    .kv,
+    .amount-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .amount-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .kv div,
+    .amount {
+      min-width: 0;
+      padding: 9px;
+      background: #fbf7ef;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .kv span,
+    .amount span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .kv strong,
+    .amount strong {
+      display: block;
+      margin-top: 5px;
+      overflow-wrap: anywhere;
+      font-size: 13px;
+    }
+
+    .amount strong {
+      font-family: var(--mono);
+      font-size: 15px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-bottom: 10px;
+    }
+
+    .tabs button {
+      min-height: 32px;
+      padding: 6px 10px;
+      color: var(--muted);
+      background: #f4eee5;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .tabs button.active {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .mini-table {
+      display: grid;
+      gap: 8px;
+    }
+
+    .mini-row {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr) auto;
+      gap: 9px;
+      align-items: start;
+      padding: 10px;
+      background: #fbf7ef;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+    }
+
+    .mini-row time {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .mini-row strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .mini-row p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .empty {
+      display: none;
+      min-height: 260px;
+      place-items: center;
+      padding: 28px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .empty.active {
+      display: grid;
+    }
+
+    .empty strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--ink);
+      font-size: 18px;
+    }
+
+    @media (max-width: 1220px) {
+      .toolbar {
+        grid-template-columns: repeat(3, minmax(150px, 1fr));
+      }
+
+      .content-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .drawer {
+        position: relative;
+        top: auto;
+        max-height: none;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: relative;
+        height: auto;
+        padding: 16px;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      main {
+        padding: 18px 14px 30px;
+      }
+
+      .topbar,
+      .callout,
+      .panel-head,
+      .pagination {
+        display: grid;
+      }
+
+      .metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .toolbar,
+      .kv,
+      .amount-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .table-wrap {
+        overflow-x: visible;
+      }
+
+      table {
+        min-width: 0;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody {
+        display: grid;
+      }
+
+      tbody tr {
+        display: grid;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      td {
+        display: grid;
+        grid-template-columns: 94px minmax(0, 1fr);
+        gap: 8px;
+        padding: 7px 0;
+        border-bottom: 0;
+      }
+
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .nav,
+      .metric-grid,
+      .rule-grid,
+      .mini-row {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .metric {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">AG</div>
+        <div>
+          <strong>代理商工作台</strong>
+          <span>静态代理 · 我的收入</span>
+        </div>
+      </div>
+      <div>
+        <div class="nav-label">模块导航</div>
+        <nav class="nav" aria-label="代理商模块">
+          <a href="agent-price-config-list-detail-prototype.html">价格设置 <small>M01</small></a>
+          <a href="agent-users-recharge-prototype.html">我的用户 <small>M02</small></a>
+          <a href="agent-sales-orders-prototype.html">销售订单 <small>M03</small></a>
+          <a class="active" href="agent-income-billing-prototype.html" aria-current="page">我的收入 <small>M04</small></a>
+        </nav>
+      </div>
+      <div class="side-note">
+        月账单由后台出账任务生成。已出账账单固定为最终收入确认快照，不随后续交付、退款或价格调整重新计算。
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Agent Income Billing</p>
+          <h1>我的收入与月度账单</h1>
+          <p class="page-copy">查看当前出账周期的实时收入预估，以及已经由后台出账日生成的月度账单。正式账单以生成时快照为准，导出与提现入口都基于该快照。</p>
+        </div>
+        <button type="button" class="btn ghost" id="showEmpty"><span class="icon">/</span>切换空态</button>
+      </header>
+
+      <section class="metric-grid" aria-label="当前出账周期实时指标">
+        <article class="metric">
+          <span>本期销售额</span>
+          <strong>$89,120.00</strong>
+          <small>实时预估，出账前非正式账单</small>
+        </article>
+        <article class="metric">
+          <span>本期平台退款</span>
+          <strong>-$3,940.00</strong>
+          <small>平台已完成退款金额</small>
+        </article>
+        <article class="metric">
+          <span>本期最终收入</span>
+          <strong>$8,430.00</strong>
+          <small>已确认最终收入</small>
+        </article>
+        <article class="metric">
+          <span>待确认收入</span>
+          <strong>$520.00</strong>
+          <small>交付 / 退款结果未完成</small>
+        </article>
+      </section>
+
+      <section class="callout" aria-label="出账配置">
+        <div>
+          <strong>当前后台出账配置：每月 5 日 02:00 生成账单</strong>
+          <span>示例账期采用半开区间：2026-05-05 00:00:00 至 2026-06-05 00:00:00。最终收入按确认发生时所在账期归集，不回滚已出账账单。</span>
+        </div>
+        <button type="button" class="btn primary" id="previewWithdraw">申请提现</button>
+      </section>
+
+      <section class="rule-grid" aria-label="账单提现入口规则">
+        <article class="rule-card">
+          <span>出账快照</span>
+          <strong>已出账后不允许重算</strong>
+          <p>列表、详情和导出都读取同一份冻结快照；后续交付或退款结果进入确认发生时账期。</p>
+        </article>
+        <article class="rule-card">
+          <span>可申请条件</span>
+          <strong>最终收入大于 0 且未关联提现</strong>
+          <p>申请提现时带入账单号、账期和可提现金额，由 M05 完成窗口、账户和二次校验。</p>
+        </article>
+        <article class="rule-card">
+          <span>阻断原因</span>
+          <strong>生成失败、已关联提现或最终收入为 0</strong>
+          <p>不可申请时保留账单详情与导出能力，并展示具体原因，避免误以为可提现金额丢失。</p>
+        </article>
+      </section>
+
+      <section class="toolbar" aria-label="月账单筛选">
+        <div class="field">
+          <label for="period">账期</label>
+          <select id="period">
+            <option>全部账期</option>
+            <option>2026</option>
+            <option>2025</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="billStatus">账单状态</label>
+          <select id="billStatus">
+            <option>全部</option>
+            <option>已出账</option>
+            <option>生成中</option>
+            <option>生成失败</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="withdrawStatus">提现入口</label>
+          <select id="withdrawStatus">
+            <option>全部</option>
+            <option>可申请</option>
+            <option>不可申请</option>
+            <option>已关联提现</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="exportStatus">导出状态</label>
+          <select id="exportStatus">
+            <option>全部</option>
+            <option>可导出</option>
+            <option>生成中</option>
+            <option>导出失败</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="keyword">搜索</label>
+          <input id="keyword" type="search" placeholder="账单号 / 账期">
+        </div>
+        <button type="button" class="btn">重置</button>
+        <button type="button" class="btn primary">查询</button>
+      </section>
+
+      <div class="content-grid">
+        <section class="panel" aria-label="月账单列表">
+          <div class="panel-head">
+            <div>
+              <h2>月账单列表</h2>
+              <p>仅展示后台任务已创建的账单记录；当前未出账周期显示在顶部实时指标。</p>
+            </div>
+            <span class="tag gray">生成后不可重算</span>
+          </div>
+          <div class="table-wrap" id="tableWrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>账单号 / 账期</th>
+                  <th>状态</th>
+                  <th>销售额</th>
+                  <th>平台退款</th>
+                  <th>最终销售额 / 成本</th>
+                  <th>最终收入 / 可提现</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="billRows">
+                <tr class="selected" data-bill="0">
+                  <td data-label="账单号 / 账期">
+                    <span class="bill-no">AB-202606-0005</span>
+                    <span class="subline">2026-05-05 至 2026-06-05</span>
+                    <span class="subline">出账 2026-06-05 02:06</span>
+                  </td>
+                  <td data-label="状态">
+                    <div class="tag-list">
+                      <span class="tag green">已出账</span>
+                      <span class="tag blue">可申请</span>
+                    </div>
+                  </td>
+                  <td data-label="销售额"><span class="money">$72,840.00</span></td>
+                  <td data-label="平台退款"><span class="money bad">-$1,280.00</span></td>
+                  <td data-label="最终销售额 / 成本">
+                    <span class="money">$71,560.00</span>
+                    <span class="subline">成本 $64,280.00</span>
+                  </td>
+                  <td data-label="最终收入 / 可提现">
+                    <span class="money good">$7,280.00</span>
+                    <span class="subline">可提现 $7,280.00</span>
+                  </td>
+                  <td data-label="操作">
+                    <button type="button" class="btn ghost action-export">导出</button>
+                    <button type="button" class="btn primary action-withdraw">提现</button>
+                  </td>
+                </tr>
+                <tr data-bill="1">
+                  <td data-label="账单号 / 账期">
+                    <span class="bill-no">AB-202605-0005</span>
+                    <span class="subline">2026-04-05 至 2026-05-05</span>
+                    <span class="subline">出账 2026-05-05 02:04</span>
+                  </td>
+                  <td data-label="状态">
+                    <div class="tag-list">
+                      <span class="tag green">已出账</span>
+                      <span class="tag gray">已关联提现</span>
+                    </div>
+                  </td>
+                  <td data-label="销售额"><span class="money">$61,540.00</span></td>
+                  <td data-label="平台退款"><span class="money bad">-$740.00</span></td>
+                  <td data-label="最终销售额 / 成本">
+                    <span class="money">$60,800.00</span>
+                    <span class="subline">成本 $55,000.00</span>
+                  </td>
+                  <td data-label="最终收入 / 可提现">
+                    <span class="money good">$5,800.00</span>
+                    <span class="subline">可提现 $0.00</span>
+                  </td>
+                  <td data-label="操作">
+                    <button type="button" class="btn ghost action-export">导出</button>
+                    <button type="button" class="btn" disabled>提现</button>
+                  </td>
+                </tr>
+                <tr data-bill="2">
+                  <td data-label="账单号 / 账期">
+                    <span class="bill-no">AB-202604-0005</span>
+                    <span class="subline">2026-03-05 至 2026-04-05</span>
+                    <span class="subline">出账 2026-04-05 02:09</span>
+                  </td>
+                  <td data-label="状态">
+                    <div class="tag-list">
+                      <span class="tag green">已出账</span>
+                      <span class="tag red">不可申请</span>
+                    </div>
+                  </td>
+                  <td data-label="销售额"><span class="money">$48,780.00</span></td>
+                  <td data-label="平台退款"><span class="money bad">-$4,560.00</span></td>
+                  <td data-label="最终销售额 / 成本">
+                    <span class="money">$44,220.00</span>
+                    <span class="subline">成本 $44,220.00</span>
+                  </td>
+                  <td data-label="最终收入 / 可提现">
+                    <span class="money">$0.00</span>
+                    <span class="subline">可提现 $0.00</span>
+                  </td>
+                  <td data-label="操作">
+                    <button type="button" class="btn ghost action-export">导出</button>
+                    <button type="button" class="btn" disabled>提现</button>
+                  </td>
+                </tr>
+                <tr data-bill="3">
+                  <td data-label="账单号 / 账期">
+                    <span class="bill-no">AB-202603-0005</span>
+                    <span class="subline">2026-02-05 至 2026-03-05</span>
+                    <span class="subline">任务开始 2026-03-05 02:00</span>
+                  </td>
+                  <td data-label="状态">
+                    <div class="tag-list">
+                      <span class="tag amber">生成失败</span>
+                      <span class="tag gray">不可导出</span>
+                    </div>
+                  </td>
+                  <td data-label="销售额"><span class="money">--</span></td>
+                  <td data-label="平台退款"><span class="money">--</span></td>
+                  <td data-label="最终销售额 / 成本"><span class="money">--</span></td>
+                  <td data-label="最终收入 / 可提现"><span class="money">--</span></td>
+                  <td data-label="操作">
+                    <button type="button" class="btn" disabled>导出</button>
+                    <button type="button" class="btn" disabled>提现</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="empty" id="emptyState">
+            <div>
+              <strong>未找到账单</strong>
+              <span>调整账期、账单状态或清空搜索关键词后重试。</span>
+            </div>
+          </div>
+          <div class="pagination">
+            <span>共 4 条示例数据 · 每页 20 条</span>
+            <div>
+              <button type="button" class="btn" disabled>上一页</button>
+              <button type="button" class="btn" disabled>下一页</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="drawer" aria-label="账单详情">
+          <div class="drawer-head" id="detailHead">
+            <span class="bill-no">AB-202606-0005</span>
+            <h2>账单详情</h2>
+            <div class="tag-list" id="detailTags">
+              <span class="tag green">已出账</span>
+              <span class="tag blue">可申请</span>
+            </div>
+            <div class="drawer-actions">
+              <button type="button" class="btn ghost" id="detailExport">导出账单</button>
+              <button type="button" class="btn primary" id="detailWithdraw">申请提现</button>
+            </div>
+          </div>
+          <div class="drawer-body" id="detailBody"></div>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const bills = [
+      {
+        no: "AB-202606-0005",
+        period: "2026-05-05 00:00:00 至 2026-06-05 00:00:00",
+        generated: "2026-06-05 02:06",
+        statusTags: ["已出账", "可申请"],
+        tones: ["green", "blue"],
+        amounts: ["$72,840.00", "-$1,280.00", "$71,560.00", "$64,280.00", "$7,280.00", "$7,280.00"],
+        withdraw: true,
+        exportable: true,
+        reason: "账单已生成最终收入快照，最终收入大于 0，且未关联提现申请。",
+        orders: [
+          ["SP-20260603-0188", "acme_admin", "已确认", "$18,420.00", "$16,520.00", "$1,900.00"],
+          ["SP-20260521-0042", "ops_renew", "部分退款后确认", "$12,880.00", "$11,750.00", "$1,130.00"],
+          ["SP-20260509-0031", "northstar", "已确认", "$9,240.00", "$8,520.00", "$720.00"]
+        ],
+        adjustments: [
+          ["2026-05-16", "平台部分退款", "-$180.00", "原订单 SP-20260428-0019，最终收入在本账期确认"],
+          ["2026-05-24", "交付失败退款", "-$90.00", "退款去向用户钱包，最终收入按未退款部分确认"]
+        ]
+      },
+      {
+        no: "AB-202605-0005",
+        period: "2026-04-05 00:00:00 至 2026-05-05 00:00:00",
+        generated: "2026-05-05 02:04",
+        statusTags: ["已出账", "已关联提现"],
+        tones: ["green", "gray"],
+        amounts: ["$61,540.00", "-$740.00", "$60,800.00", "$55,000.00", "$5,800.00", "$0.00"],
+        withdraw: false,
+        exportable: true,
+        reason: "该账单已关联提现申请 WD-20260505-0091。",
+        orders: [
+          ["SP-20260427-0166", "build_team", "已确认", "$14,000.00", "$12,620.00", "$1,380.00"],
+          ["SP-20260418-0087", "acme_admin", "部分退款后确认", "$10,820.00", "$9,780.00", "$1,040.00"]
+        ],
+        adjustments: [
+          ["2026-04-12", "交付失败退款", "-$64.00", "平台退款完成后确认最终收入"]
+        ]
+      },
+      {
+        no: "AB-202604-0005",
+        period: "2026-03-05 00:00:00 至 2026-04-05 00:00:00",
+        generated: "2026-04-05 02:09",
+        statusTags: ["已出账", "不可申请"],
+        tones: ["green", "red"],
+        amounts: ["$48,780.00", "-$4,560.00", "$44,220.00", "$44,220.00", "$0.00", "$0.00"],
+        withdraw: false,
+        exportable: true,
+        reason: "本账单最终收入为 $0.00，不满足提现申请条件。",
+        orders: [
+          ["SP-20260328-0054", "northstar", "全额退款", "$8,820.00", "$8,820.00", "$0.00"],
+          ["SP-20260317-0110", "ops_renew", "部分退款后确认", "$6,100.00", "$5,520.00", "$0.00"]
+        ],
+        adjustments: [
+          ["2026-03-31", "平台全额退款", "-$8,820.00", "全部交付失败，最终收入为 0"]
+        ]
+      },
+      {
+        no: "AB-202603-0005",
+        period: "2026-02-05 00:00:00 至 2026-03-05 00:00:00",
+        generated: "生成失败",
+        statusTags: ["生成失败", "不可导出"],
+        tones: ["amber", "gray"],
+        amounts: ["--", "--", "--", "--", "--", "--"],
+        withdraw: false,
+        exportable: false,
+        reason: "账单生成任务失败，需后台修复后重新生成；未生成成功前不存在可导出快照。",
+        orders: [],
+        adjustments: []
+      }
+    ];
+
+    const detailBody = document.getElementById("detailBody");
+    const detailHead = document.getElementById("detailHead");
+    const detailTags = document.getElementById("detailTags");
+    const detailExport = document.getElementById("detailExport");
+    const detailWithdraw = document.getElementById("detailWithdraw");
+    const rows = Array.from(document.querySelectorAll("#billRows tr"));
+    const emptyState = document.getElementById("emptyState");
+    const tableWrap = document.getElementById("tableWrap");
+    let selectedIndex = 0;
+    let activeTab = "orders";
+
+    function moneyTone(value) {
+      if (value.startsWith("-")) return "money bad";
+      if (value.startsWith("$") && value !== "$0.00") return "money good";
+      return "money";
+    }
+
+    function renderMiniRows(items, type) {
+      if (!items.length) {
+        return `<div class="empty active" style="min-height:120px;"><div><strong>暂无明细</strong><span>当前账单没有${type}。</span></div></div>`;
+      }
+
+      return `<div class="mini-table">${items.map(item => {
+        if (type === "最终收入明细") {
+          return `
+            <div class="mini-row">
+              <time>${item[0]}</time>
+              <div>
+                <strong>${item[1]}</strong>
+                <p>${item[2]} · 销售额 ${item[3]}，最终成本 ${item[4]}</p>
+              </div>
+              <span class="${moneyTone(item[5])}">${item[5]}</span>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="mini-row">
+            <time>${item[0]}</time>
+            <div>
+              <strong>${item[1]}</strong>
+              <p>${item[3]}</p>
+            </div>
+            <span class="${moneyTone(item[2])}">${item[2]}</span>
+          </div>
+        `;
+      }).join("")}</div>`;
+    }
+
+    function renderDetail(index) {
+      const bill = bills[index];
+      selectedIndex = index;
+      detailHead.querySelector(".bill-no").textContent = bill.no;
+      detailTags.innerHTML = bill.statusTags.map((tag, i) => `<span class="tag ${bill.tones[i]}">${tag}</span>`).join("");
+      detailExport.disabled = !bill.exportable;
+      detailWithdraw.disabled = !bill.withdraw;
+      detailBody.innerHTML = `
+        <section class="detail-section">
+          <h3>账单快照</h3>
+          <div class="kv">
+            <div><span>账单号</span><strong>${bill.no}</strong></div>
+            <div><span>账期</span><strong>${bill.period}</strong></div>
+            <div><span>生成时间</span><strong>${bill.generated}</strong></div>
+            <div><span>提现判断</span><strong>${bill.reason}</strong></div>
+          </div>
+        </section>
+        <section class="detail-section">
+          <h3>金额汇总</h3>
+          <div class="amount-grid">
+            <div class="amount"><span>销售额</span><strong>${bill.amounts[0]}</strong></div>
+            <div class="amount"><span>平台退款</span><strong class="money bad">${bill.amounts[1]}</strong></div>
+            <div class="amount"><span>最终销售额</span><strong>${bill.amounts[2]}</strong></div>
+            <div class="amount"><span>最终成本</span><strong>${bill.amounts[3]}</strong></div>
+            <div class="amount"><span>最终收入</span><strong class="money good">${bill.amounts[4]}</strong></div>
+            <div class="amount"><span>可提现金额</span><strong class="money good">${bill.amounts[5]}</strong></div>
+          </div>
+        </section>
+        <section class="detail-section">
+          <h3>明细</h3>
+          <div class="tabs">
+            <button type="button" class="${activeTab === "orders" ? "active" : ""}" data-tab="orders">最终收入明细</button>
+            <button type="button" class="${activeTab === "adjustments" ? "active" : ""}" data-tab="adjustments">退款影响明细</button>
+          </div>
+          <div id="tabContent">
+            ${activeTab === "orders" ? renderMiniRows(bill.orders, "最终收入明细") : renderMiniRows(bill.adjustments, "退款影响明细")}
+          </div>
+        </section>
+      `;
+
+      Array.from(detailBody.querySelectorAll("[data-tab]")).forEach(button => {
+        button.addEventListener("click", () => {
+          activeTab = button.dataset.tab;
+          renderDetail(selectedIndex);
+        });
+      });
+    }
+
+    rows.forEach((row, index) => {
+      row.addEventListener("click", event => {
+        if (event.target.closest("button")) return;
+        rows.forEach(item => item.classList.remove("selected"));
+        row.classList.add("selected");
+        tableWrap.style.display = "";
+        emptyState.classList.remove("active");
+        activeTab = "orders";
+        renderDetail(index);
+      });
+    });
+
+    Array.from(document.querySelectorAll(".action-export")).forEach(button => {
+      button.addEventListener("click", event => {
+        event.stopPropagation();
+        button.textContent = "生成中";
+        setTimeout(() => { button.textContent = "导出"; }, 900);
+      });
+    });
+
+    Array.from(document.querySelectorAll(".action-withdraw")).forEach(button => {
+      button.addEventListener("click", event => {
+        event.stopPropagation();
+        window.location.href = "agent-withdrawal-prototype.html?bill=AB-202606-0005";
+      });
+    });
+
+    detailExport.addEventListener("click", () => {
+      detailExport.textContent = "生成中";
+      setTimeout(() => { detailExport.textContent = "导出账单"; }, 900);
+    });
+
+    detailWithdraw.addEventListener("click", () => {
+      window.location.href = "agent-withdrawal-prototype.html?bill=AB-202606-0005";
+    });
+
+    document.getElementById("previewWithdraw").addEventListener("click", () => {
+      const target = rows.find(row => row.dataset.bill === "0");
+      if (target) target.click();
+      detailWithdraw.focus();
+    });
+
+    document.getElementById("showEmpty").addEventListener("click", () => {
+      const showingEmpty = emptyState.classList.toggle("active");
+      tableWrap.style.display = showingEmpty ? "none" : "";
+    });
+
+    renderDetail(0);
+  </script>
+</body>
+</html>

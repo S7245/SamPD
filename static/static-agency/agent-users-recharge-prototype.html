@@ -1,0 +1,1311 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>静态代理 · 我的用户与用户充值原型</title>
+  <style>
+    :root {
+      --bg: #f6f3ee;
+      --panel: #fffdf8;
+      --panel-2: #f1ebe1;
+      --ink: #1e2825;
+      --muted: #66736f;
+      --line: #ded5c8;
+      --line-strong: #b9ad9e;
+      --accent: #16635b;
+      --accent-2: #315f8f;
+      --accent-soft: #dff0ed;
+      --blue-soft: #e2edf8;
+      --amber: #8a5a00;
+      --amber-soft: #fff2cf;
+      --red: #9e2f25;
+      --red-soft: #ffe1dc;
+      --green: #28684e;
+      --green-soft: #dcefe5;
+      --shadow: 0 16px 36px rgba(38, 33, 25, 0.09);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: var(--sans);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 22px 16px;
+      background: #222a27;
+      color: #f8f4ec;
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.26);
+      border-radius: 7px;
+      background: #2d3935;
+      font-weight: 900;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 2px;
+      color: #aebbb6;
+      font-size: 12px;
+    }
+
+    .nav-label {
+      color: #aebbb6;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav a {
+      min-height: 38px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 10px;
+      color: #dce4e0;
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .nav a.active,
+    .nav a:hover {
+      background: #34413d;
+      color: #fff;
+    }
+
+    .nav small {
+      color: #9ba8a3;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .side-note {
+      margin-top: auto;
+      padding: 12px;
+      color: #c6d1cd;
+      background: #2b3532;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 7px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    main {
+      min-width: 0;
+      padding: 26px;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      font-size: 18px;
+    }
+
+    h3 {
+      font-size: 14px;
+    }
+
+    .page-copy {
+      max-width: 780px;
+      margin: 9px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 8px 12px;
+      color: var(--ink);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn.blue {
+      color: #fff;
+      background: var(--accent-2);
+      border-color: var(--accent-2);
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .icon {
+      font-family: var(--mono);
+      font-weight: 900;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .metric {
+      min-height: 106px;
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric strong {
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .metric small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) 160px 220px auto;
+      gap: 10px;
+      align-items: end;
+      padding: 14px;
+      margin-bottom: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 76px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(22, 99, 91, 0.12);
+    }
+
+    .panel {
+      overflow: hidden;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel-head {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fffaf0;
+    }
+
+    .panel-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 13px;
+    }
+
+    th {
+      color: var(--muted);
+      background: #faf7ef;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    tbody tr:hover {
+      background: #fcf7eb;
+    }
+
+    .mono {
+      font-family: var(--mono);
+      letter-spacing: 0;
+    }
+
+    .user-main {
+      display: grid;
+      gap: 3px;
+    }
+
+    .user-main strong {
+      font-size: 13px;
+    }
+
+    .user-main span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .badge {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .badge.ok {
+      color: var(--green);
+      background: var(--green-soft);
+      border-color: #a8d8bd;
+    }
+
+    .badge.warn {
+      color: var(--amber);
+      background: var(--amber-soft);
+      border-color: #e8cf8b;
+    }
+
+    .badge.bad {
+      color: var(--red);
+      background: var(--red-soft);
+      border-color: #efb3ab;
+    }
+
+    .badge.info {
+      color: var(--accent-2);
+      background: var(--blue-soft);
+      border-color: #a9c6e5;
+    }
+
+    .row-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .link-btn {
+      padding: 0;
+      color: var(--accent);
+      background: transparent;
+      cursor: pointer;
+      font-weight: 900;
+      text-decoration: none;
+    }
+
+    .link-btn:disabled {
+      color: var(--muted);
+      cursor: not-allowed;
+    }
+
+    .pager {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .drawer-backdrop,
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      background: rgba(20, 28, 25, 0.38);
+      z-index: 20;
+    }
+
+    .drawer-backdrop.show,
+    .modal-backdrop.show {
+      display: block;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(520px, 100vw);
+      height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      background: var(--panel);
+      box-shadow: -18px 0 40px rgba(16, 20, 18, 0.22);
+      transform: translateX(110%);
+      transition: transform 180ms ease;
+      z-index: 30;
+    }
+
+    .drawer.show {
+      transform: translateX(0);
+    }
+
+    .drawer-head,
+    .modal-head {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 18px;
+      border-bottom: 1px solid var(--line);
+      background: #fffaf0;
+    }
+
+    .drawer-body {
+      overflow: auto;
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .drawer-foot,
+    .modal-foot {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      padding: 14px 18px;
+      border-top: 1px solid var(--line);
+      background: #fbf7ee;
+    }
+
+    .section {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+    }
+
+    .section h3 {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .desc {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .desc div {
+      display: grid;
+      gap: 4px;
+    }
+
+    .desc span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .desc strong {
+      font-size: 13px;
+      overflow-wrap: anywhere;
+    }
+
+    .mini-table {
+      min-width: 0;
+    }
+
+    .mini-table th,
+    .mini-table td {
+      padding: 9px 8px;
+      font-size: 12px;
+    }
+
+    .modal {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: min(560px, calc(100vw - 26px));
+      max-height: calc(100vh - 26px);
+      display: none;
+      grid-template-rows: auto 1fr auto;
+      background: var(--panel);
+      border-radius: 8px;
+      box-shadow: 0 24px 60px rgba(16, 20, 18, 0.24);
+      transform: translate(-50%, -50%);
+      z-index: 40;
+    }
+
+    .modal.show {
+      display: grid;
+    }
+
+    .modal-body {
+      overflow: auto;
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .summary-bar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      background: var(--accent-soft);
+      border: 1px solid #b5d9d3;
+      border-radius: 7px;
+    }
+
+    .summary-bar strong {
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .summary-bar span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .alert {
+      padding: 10px 12px;
+      color: var(--amber);
+      background: var(--amber-soft);
+      border: 1px solid #e6ce8c;
+      border-radius: 7px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .alert.error {
+      color: var(--red);
+      background: var(--red-soft);
+      border-color: #efb3ab;
+    }
+
+    .alert.success {
+      color: var(--green);
+      background: var(--green-soft);
+      border-color: #a8d8bd;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .step {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      color: var(--muted);
+      background: #f7f1e7;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .step.active {
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-color: #acd8d0;
+    }
+
+    .toast {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      display: none;
+      padding: 12px 14px;
+      color: var(--green);
+      background: var(--green-soft);
+      border: 1px solid #a8d8bd;
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      font-weight: 900;
+      z-index: 60;
+    }
+
+    .toast.show {
+      display: block;
+    }
+
+    .close {
+      min-width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    @media (max-width: 1080px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        padding: 14px;
+      }
+
+      .nav {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .nav a {
+        display: grid;
+        justify-items: start;
+      }
+
+      .side-note {
+        display: none;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .toolbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      main {
+        padding: 16px;
+      }
+
+      .topbar,
+      .panel-head {
+        display: grid;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .metrics,
+      .toolbar,
+      .desc,
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
+      .metric {
+        min-height: auto;
+      }
+
+      .actions,
+      .drawer-foot,
+      .modal-foot,
+      .pager {
+        justify-content: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .drawer {
+        width: 100vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">IP</div>
+        <div>
+          <strong>代理商工作台</strong>
+          <span>Static Proxy Agent</span>
+        </div>
+      </div>
+      <div>
+        <div class="nav-label">模块</div>
+        <nav class="nav" aria-label="代理商模块导航">
+          <a href="agent-price-config-list-detail-prototype.html"><span>价格设置</span><small>M01</small></a>
+          <a class="active" href="agent-users-recharge-prototype.html" aria-current="page"><span>我的用户</span><small>M02</small></a>
+          <a href="agent-sales-orders-prototype.html"><span>销售订单</span><small>M03</small></a>
+          <a href="agent-income-billing-prototype.html"><span>我的收入</span><small>M04</small></a>
+        </nav>
+      </div>
+      <div class="side-note">
+        当前原型只覆盖 M02。下级用户来源由后端强制按当前代理商 `agency_id` 过滤，不提供邀请、创建、绑定或解绑入口。
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">M02 · 我的用户与用户充值</p>
+          <h1>我的用户</h1>
+          <p class="page-copy">代理商查看已绑定用户，从代理钱包向可用下级用户钱包充值。充值不走 Checkout，不自动支付待支付订单。</p>
+        </div>
+        <div class="actions">
+          <button type="button" class="btn" id="refreshBtn"><span class="icon">R</span>刷新</button>
+          <button type="button" class="btn blue" id="openFirstRecharge"><span class="icon">+</span>给可用用户充值</button>
+        </div>
+      </header>
+
+      <section class="metrics" aria-label="我的用户指标">
+        <div class="metric">
+          <span>代理钱包可用余额</span>
+          <strong id="walletMetric">$12,340.00</strong>
+          <small>仅展示可用于充值的可用余额</small>
+        </div>
+        <div class="metric">
+          <span>下级用户数</span>
+          <strong id="totalMetric">128</strong>
+          <small>当前代理 `agency_id` 归属用户</small>
+        </div>
+        <div class="metric">
+          <span>可用用户数</span>
+          <strong>116</strong>
+          <small>`status=1` 可发起充值</small>
+        </div>
+        <div class="metric">
+          <span>近 30 天充值成功数</span>
+          <strong id="rechargeMetric">24</strong>
+          <small>本代理发起并成功完成</small>
+        </div>
+      </section>
+
+      <section class="toolbar" aria-label="用户筛选">
+        <div class="field">
+          <label for="keyword">搜索账号 / 昵称 / 邮箱 / 手机</label>
+          <input id="keyword" type="search" placeholder="alice@example.com">
+        </div>
+        <div class="field">
+          <label for="statusFilter">用户状态</label>
+          <select id="statusFilter">
+            <option value="all">全部</option>
+            <option value="ok">可用</option>
+            <option value="disabled">不可用</option>
+            <option value="inactive">未激活</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="dateFilter">注册时间</label>
+          <input id="dateFilter" type="text" value="2026-05-01 - 2026-06-08">
+        </div>
+        <button type="button" class="btn" id="resetBtn">重置</button>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2>下级用户列表</h2>
+            <p>后端按当前登录代理商强制过滤 `platform_id` 与 `agency_id`，前端不接受任意代理商参数。</p>
+          </div>
+          <span class="badge info" id="resultCount">4 条示例数据</span>
+        </div>
+        <div class="table-wrap">
+          <table aria-label="下级用户列表">
+            <thead>
+              <tr>
+                <th>用户ID</th>
+                <th>账号 / 昵称</th>
+                <th>邮箱 / 手机</th>
+                <th>状态</th>
+                <th>用户钱包</th>
+                <th>注册时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="userRows"></tbody>
+          </table>
+        </div>
+        <div class="pager">
+          <span>每页 20 条</span>
+          <button type="button" class="btn" disabled>上一页</button>
+          <strong>1</strong>
+          <button type="button" class="btn">下一页</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+  <aside class="drawer" id="drawer" aria-label="用户详情抽屉">
+    <div class="drawer-head">
+      <div>
+        <p class="eyebrow">用户详情</p>
+        <h2 id="drawerTitle">alice@example.com</h2>
+        <p class="hint">仅展示当前代理名下用户信息和本代理发起的最近充值记录。</p>
+      </div>
+      <button type="button" class="close" id="closeDrawer">X</button>
+    </div>
+    <div class="drawer-body">
+      <section class="section">
+        <h3>基础信息 <span id="drawerStatus" class="badge ok">可用</span></h3>
+        <div class="desc">
+          <div><span>用户ID</span><strong id="drawerUserId">10021</strong></div>
+          <div><span>账号</span><strong id="drawerAccount">alice@example.com</strong></div>
+          <div><span>昵称</span><strong id="drawerNickname">Alice Team</strong></div>
+          <div><span>邮箱</span><strong id="drawerEmail">a***@example.com</strong></div>
+          <div><span>手机</span><strong id="drawerPhone">+86 ****1234</strong></div>
+          <div><span>注册时间</span><strong id="drawerCreated">2026-05-01</strong></div>
+        </div>
+      </section>
+      <section class="section">
+        <h3>钱包与归属</h3>
+        <div class="desc">
+          <div><span>用户钱包可用余额</span><strong id="drawerBalance">$230.00</strong></div>
+          <div><span>代理归属</span><strong>当前代理商</strong></div>
+          <div><span>最近充值</span><strong id="drawerLatest">$100.00 · 成功</strong></div>
+          <div><span>冻结余额</span><strong>不在本模块展示</strong></div>
+        </div>
+      </section>
+      <section class="section">
+        <h3>最近 5 条充值记录</h3>
+        <table class="mini-table" aria-label="最近充值记录">
+          <thead>
+            <tr>
+              <th>单号</th>
+              <th>金额</th>
+              <th>状态</th>
+              <th>完成时间</th>
+            </tr>
+          </thead>
+          <tbody id="recordRows"></tbody>
+        </table>
+      </section>
+    </div>
+    <div class="drawer-foot">
+      <button type="button" class="btn" id="viewOrdersBtn">查看该用户销售订单</button>
+      <button type="button" class="btn primary" id="drawerRechargeBtn">给用户充值</button>
+    </div>
+  </aside>
+
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+  <section class="modal" id="rechargeModal" aria-label="用户充值弹窗">
+    <div class="modal-head">
+      <div>
+        <p class="eyebrow" id="modalEyebrow">Step 1</p>
+        <h2 id="modalTitle">给下级用户充值</h2>
+      </div>
+      <button type="button" class="close" id="closeModal">X</button>
+    </div>
+    <div class="modal-body">
+      <div class="steps">
+        <div class="step active" id="stepAmount">1. 金额录入</div>
+        <div class="step" id="stepVerify">2. 支付密码确认</div>
+      </div>
+      <div class="summary-bar">
+        <div>
+          <strong id="modalUser">alice@example.com / ID 10021</strong>
+          <span id="modalUserMeta">状态：可用 · 代理钱包可用余额：$12,340.00</span>
+        </div>
+        <span class="badge ok" id="modalUserStatus">可充值</span>
+      </div>
+      <div id="amountStep">
+        <div class="field">
+          <label for="amountInput">充值金额 USD</label>
+          <input id="amountInput" type="number" min="0" step="0.01" placeholder="100.00">
+          <p class="hint">金额必须大于 0，最多 2 位小数；单笔与单日限制由后端风控配置返回。</p>
+        </div>
+        <div class="field">
+          <label for="remarkInput">备注</label>
+          <textarea id="remarkInput" maxlength="100" placeholder="仅代理端内部可见，最多 100 字"></textarea>
+        </div>
+        <div class="alert">充值成功后仅增加用户钱包余额，不会自动支付待支付订单或重试自动续费失败订单。</div>
+        <div class="alert error" id="amountError" style="display:none"></div>
+      </div>
+      <div id="verifyStep" style="display:none">
+        <div class="alert" id="confirmText">本次将从代理钱包扣减 $100.00，并向用户钱包增加 $100.00。</div>
+        <div class="field">
+          <label for="passwordInput">支付密码</label>
+          <input id="passwordInput" type="password" placeholder="请输入支付密码">
+          <p class="hint">P0 使用代理商支付密码；错误锁定、2FA 或邮箱验证码由安全侧配置。</p>
+        </div>
+        <button type="button" class="link-btn" id="securityLink">忘记 / 设置支付密码</button>
+        <div class="alert error" id="verifyError" style="display:none"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn" id="cancelModal">取消</button>
+      <button type="button" class="btn" id="backStep" style="display:none">返回修改</button>
+      <button type="button" class="btn primary" id="nextStep">下一步</button>
+      <button type="button" class="btn primary" id="submitRecharge" style="display:none">确认充值</button>
+    </div>
+  </section>
+
+  <div class="toast" id="toast">充值成功，余额与最近充值记录已刷新。</div>
+
+  <script>
+    const users = [
+      {
+        id: "10021",
+        account: "alice@example.com",
+        nickname: "Alice Team",
+        email: "a***@example.com",
+        phone: "+86 ****1234",
+        status: "ok",
+        balance: 230,
+        created: "2026-05-01",
+        records: [
+          { no: "AR20260605001", amount: 100, status: "成功", time: "06-05 10:00" },
+          { no: "AR20260522009", amount: 50, status: "成功", time: "05-22 16:18" }
+        ]
+      },
+      {
+        id: "10022",
+        account: "bob",
+        nickname: "Bob Ops",
+        email: "b***@mail.com",
+        phone: "+86 ****9988",
+        status: "inactive",
+        balance: 0,
+        created: "2026-05-03",
+        records: []
+      },
+      {
+        id: "10023",
+        account: "cathy@example.com",
+        nickname: "Cathy",
+        email: "c***@example.com",
+        phone: "+1 ****7345",
+        status: "ok",
+        balance: 760,
+        created: "2026-05-21",
+        records: [
+          { no: "AR20260602003", amount: 300, status: "处理中", time: "06-02 12:30" },
+          { no: "AR20260530007", amount: 200, status: "成功", time: "05-30 09:42" }
+        ]
+      },
+      {
+        id: "10024",
+        account: "dylan",
+        nickname: "Dylan Lab",
+        email: "d***@mail.com",
+        phone: "+44 ****9021",
+        status: "disabled",
+        balance: 14,
+        created: "2026-06-01",
+        records: [
+          { no: "AR20260603005", amount: 20, status: "失败", time: "06-03 13:10" }
+        ]
+      }
+    ];
+
+    let agentWallet = 12340;
+    let currentUser = users[0];
+    let currentStep = 1;
+
+    const statusMeta = {
+      ok: { text: "可用", badge: "ok", canRecharge: true, reason: "" },
+      inactive: { text: "未激活", badge: "warn", canRecharge: false, reason: "用户未激活，暂不可充值" },
+      disabled: { text: "不可用", badge: "bad", canRecharge: false, reason: "用户状态不可用，暂不可充值" }
+    };
+
+    const money = (value) => `$${Number(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const rows = document.getElementById("userRows");
+    const keyword = document.getElementById("keyword");
+    const statusFilter = document.getElementById("statusFilter");
+    const resultCount = document.getElementById("resultCount");
+    const walletMetric = document.getElementById("walletMetric");
+    const rechargeMetric = document.getElementById("rechargeMetric");
+    const drawer = document.getElementById("drawer");
+    const drawerBackdrop = document.getElementById("drawerBackdrop");
+    const modal = document.getElementById("rechargeModal");
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const amountInput = document.getElementById("amountInput");
+    const remarkInput = document.getElementById("remarkInput");
+    const passwordInput = document.getElementById("passwordInput");
+    const amountError = document.getElementById("amountError");
+    const verifyError = document.getElementById("verifyError");
+    const toast = document.getElementById("toast");
+
+    function filteredUsers() {
+      const q = keyword.value.trim().toLowerCase();
+      const filter = statusFilter.value;
+      return users.filter((user) => {
+        const matchesText = !q || [user.id, user.account, user.nickname, user.email, user.phone].join(" ").toLowerCase().includes(q);
+        const matchesStatus = filter === "all" || user.status === filter;
+        return matchesText && matchesStatus;
+      });
+    }
+
+    function renderUsers() {
+      const data = filteredUsers();
+      rows.innerHTML = data.map((user) => {
+        const meta = statusMeta[user.status];
+        return `
+          <tr>
+            <td class="mono">${user.id}</td>
+            <td>
+              <div class="user-main">
+                <strong>${user.account}</strong>
+                <span>${user.nickname}</span>
+              </div>
+            </td>
+            <td>
+              <div class="user-main">
+                <strong>${user.email}</strong>
+                <span>${user.phone}</span>
+              </div>
+            </td>
+            <td><span class="badge ${meta.badge}">${meta.text}</span></td>
+            <td class="mono">${money(user.balance)}</td>
+            <td>${user.created}</td>
+            <td>
+              <div class="row-actions">
+                <button type="button" class="link-btn" data-action="detail" data-id="${user.id}">详情</button>
+                <button type="button" class="link-btn" data-action="recharge" data-id="${user.id}" ${meta.canRecharge ? "" : "disabled"} title="${meta.reason}">充值</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join("");
+      resultCount.textContent = data.length ? `${data.length} 条示例数据` : "未找到匹配用户";
+      walletMetric.textContent = money(agentWallet);
+    }
+
+    function renderDrawer(user) {
+      currentUser = user;
+      const meta = statusMeta[user.status];
+      document.getElementById("drawerTitle").textContent = user.account;
+      document.getElementById("drawerStatus").textContent = meta.text;
+      document.getElementById("drawerStatus").className = `badge ${meta.badge}`;
+      document.getElementById("drawerUserId").textContent = user.id;
+      document.getElementById("drawerAccount").textContent = user.account;
+      document.getElementById("drawerNickname").textContent = user.nickname;
+      document.getElementById("drawerEmail").textContent = user.email;
+      document.getElementById("drawerPhone").textContent = user.phone;
+      document.getElementById("drawerCreated").textContent = user.created;
+      document.getElementById("drawerBalance").textContent = money(user.balance);
+      document.getElementById("drawerLatest").textContent = user.records.length ? `${money(user.records[0].amount)} · ${user.records[0].status}` : "暂无";
+      document.getElementById("drawerRechargeBtn").disabled = !meta.canRecharge;
+      document.getElementById("recordRows").innerHTML = user.records.length ? user.records.slice(0, 5).map((record) => {
+        const badge = record.status === "成功" ? "ok" : record.status === "处理中" ? "info" : "bad";
+        return `
+          <tr>
+            <td class="mono">${record.no}</td>
+            <td>${money(record.amount)}</td>
+            <td><span class="badge ${badge}">${record.status}</span></td>
+            <td>${record.time}</td>
+          </tr>
+        `;
+      }).join("") : `<tr><td colspan="4">暂无本代理发起的充值记录</td></tr>`;
+    }
+
+    function showDrawer(user) {
+      renderDrawer(user);
+      drawerBackdrop.classList.add("show");
+      drawer.classList.add("show");
+    }
+
+    function closeDrawer() {
+      drawerBackdrop.classList.remove("show");
+      drawer.classList.remove("show");
+    }
+
+    function openRecharge(user) {
+      currentUser = user;
+      currentStep = 1;
+      amountInput.value = "";
+      remarkInput.value = "";
+      passwordInput.value = "";
+      amountError.style.display = "none";
+      verifyError.style.display = "none";
+      updateModalUser();
+      setStep(1);
+      modalBackdrop.classList.add("show");
+      modal.classList.add("show");
+      setTimeout(() => amountInput.focus(), 80);
+    }
+
+    function updateModalUser() {
+      const meta = statusMeta[currentUser.status];
+      document.getElementById("modalUser").textContent = `${currentUser.account} / ID ${currentUser.id}`;
+      document.getElementById("modalUserMeta").textContent = `状态：${meta.text} · 代理钱包可用余额：${money(agentWallet)}`;
+      document.getElementById("modalUserStatus").textContent = meta.canRecharge ? "可充值" : "不可充值";
+      document.getElementById("modalUserStatus").className = `badge ${meta.canRecharge ? "ok" : "warn"}`;
+    }
+
+    function closeModal() {
+      modalBackdrop.classList.remove("show");
+      modal.classList.remove("show");
+    }
+
+    function validateAmount() {
+      const raw = amountInput.value.trim();
+      const value = Number(raw);
+      const hasTwoDecimals = /^\d+(\.\d{1,2})?$/.test(raw);
+      if (!raw) return "请输入充值金额";
+      if (!hasTwoDecimals || value <= 0) return "充值金额必须大于 0，且最多 2 位小数";
+      if (value > agentWallet) return "代理钱包余额不足";
+      if (!statusMeta[currentUser.status].canRecharge) return statusMeta[currentUser.status].reason;
+      return "";
+    }
+
+    function setStep(step) {
+      currentStep = step;
+      document.getElementById("modalEyebrow").textContent = step === 1 ? "Step 1" : "Step 2";
+      document.getElementById("modalTitle").textContent = step === 1 ? "给下级用户充值" : "确认充值";
+      document.getElementById("amountStep").style.display = step === 1 ? "grid" : "none";
+      document.getElementById("verifyStep").style.display = step === 2 ? "grid" : "none";
+      document.getElementById("stepAmount").classList.toggle("active", step === 1);
+      document.getElementById("stepVerify").classList.toggle("active", step === 2);
+      document.getElementById("cancelModal").style.display = step === 1 ? "inline-flex" : "none";
+      document.getElementById("backStep").style.display = step === 2 ? "inline-flex" : "none";
+      document.getElementById("nextStep").style.display = step === 1 ? "inline-flex" : "none";
+      document.getElementById("submitRecharge").style.display = step === 2 ? "inline-flex" : "none";
+      if (step === 2) {
+        const amount = Number(amountInput.value);
+        document.getElementById("confirmText").textContent = `本次将从代理钱包扣减 ${money(amount)}，并向 ${currentUser.account} 用户钱包增加 ${money(amount)}。`;
+      }
+    }
+
+    function submitRecharge() {
+      const amount = Number(amountInput.value);
+      if (!passwordInput.value.trim()) {
+        verifyError.textContent = "请输入支付密码";
+        verifyError.style.display = "block";
+        return;
+      }
+      if (passwordInput.value.trim().length < 6) {
+        verifyError.textContent = "支付密码错误或未通过安全校验";
+        verifyError.style.display = "block";
+        return;
+      }
+      const no = `AR20260608${String(Math.floor(Math.random() * 900) + 100)}`;
+      agentWallet -= amount;
+      currentUser.balance += amount;
+      currentUser.records.unshift({ no, amount, status: "成功", time: "06-08 15:30" });
+      rechargeMetric.textContent = String(Number(rechargeMetric.textContent) + 1);
+      renderUsers();
+      renderDrawer(currentUser);
+      closeModal();
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    rows.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const user = users.find((item) => item.id === button.dataset.id);
+      if (!user) return;
+      if (button.dataset.action === "detail") showDrawer(user);
+      if (button.dataset.action === "recharge" && statusMeta[user.status].canRecharge) openRecharge(user);
+    });
+
+    keyword.addEventListener("input", renderUsers);
+    statusFilter.addEventListener("change", renderUsers);
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      keyword.value = "";
+      statusFilter.value = "all";
+      document.getElementById("dateFilter").value = "2026-05-01 - 2026-06-08";
+      renderUsers();
+    });
+    document.getElementById("refreshBtn").addEventListener("click", renderUsers);
+    document.getElementById("openFirstRecharge").addEventListener("click", () => openRecharge(users.find((user) => user.status === "ok")));
+    document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
+    drawerBackdrop.addEventListener("click", closeDrawer);
+    document.getElementById("drawerRechargeBtn").addEventListener("click", () => openRecharge(currentUser));
+    document.getElementById("viewOrdersBtn").addEventListener("click", () => {
+      const userId = currentUser?.id || "";
+      window.location.href = `agent-sales-orders-prototype.html?user=${encodeURIComponent(userId)}`;
+    });
+    document.getElementById("closeModal").addEventListener("click", closeModal);
+    document.getElementById("cancelModal").addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", closeModal);
+    document.getElementById("backStep").addEventListener("click", () => setStep(1));
+    document.getElementById("nextStep").addEventListener("click", () => {
+      const error = validateAmount();
+      if (error) {
+        amountError.textContent = error;
+        amountError.style.display = "block";
+        return;
+      }
+      amountError.style.display = "none";
+      setStep(2);
+      setTimeout(() => passwordInput.focus(), 80);
+    });
+    document.getElementById("submitRecharge").addEventListener("click", submitRecharge);
+    document.getElementById("securityLink").addEventListener("click", () => alert("跳转统一安全中心：支付密码设置入口待账号安全模块确认"));
+
+    renderUsers();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1733 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>静态代理 · 代理商价格工作台原型</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root {
+      --ink: #15201d;
+      --muted: #68736f;
+      --faint: #8c9692;
+      --paper: #f5f2ea;
+      --panel: #fffdf8;
+      --panel-2: #f9f7f1;
+      --line: #d9d1c4;
+      --line-strong: #b9ac9a;
+      --charcoal: #202b28;
+      --charcoal-2: #2f3a36;
+      --mint: #157c62;
+      --mint-soft: #e4f2ec;
+      --amber: #b36a12;
+      --amber-soft: #fff2da;
+      --red: #af3326;
+      --red-soft: #ffebe7;
+      --blue: #265d87;
+      --blue-soft: #e5eef5;
+      --shadow: 0 18px 50px rgba(32, 43, 40, 0.12);
+      --mono: "Avenir Next", "DIN Alternate", "SFMono-Regular", "Menlo", monospace;
+      --sans: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      background: var(--paper);
+    }
+
+    body {
+      min-width: 320px;
+      margin: 0;
+      color: var(--ink);
+      font-family: var(--sans);
+      background:
+        linear-gradient(90deg, rgba(32, 43, 40, 0.045) 1px, transparent 1px) 0 0 / 32px 32px,
+        linear-gradient(0deg, rgba(32, 43, 40, 0.035) 1px, transparent 1px) 0 0 / 32px 32px,
+        var(--paper);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 232px minmax(0, 1fr);
+    }
+
+    .rail {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 22px 16px;
+      background: var(--charcoal);
+      color: #f8f4ec;
+      border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 44px;
+      margin-bottom: 22px;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: #f8f4ec;
+      color: var(--charcoal);
+      border-radius: 6px;
+      font-family: var(--mono);
+      font-weight: 800;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.15;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 2px;
+      color: #aeb9b4;
+      font-size: 12px;
+    }
+
+    .rail-section {
+      margin-top: 22px;
+    }
+
+    .rail-label {
+      margin: 0 0 8px;
+      color: #aeb9b4;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .nav-button {
+      width: 100%;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+      padding: 9px 10px;
+      color: #dbe4df;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      text-align: left;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .nav-button.active {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .nav-icon {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      color: #f4cf8a;
+      font-family: var(--mono);
+      border-radius: 5px;
+      background: rgba(244, 207, 138, 0.1);
+    }
+
+    .rail-note {
+      margin-top: 24px;
+      padding: 12px;
+      color: #dbe4df;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      line-height: 1.55;
+      font-size: 12px;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 22px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--amber);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.12;
+      font-weight: 900;
+    }
+
+    .subtitle {
+      max-width: 780px;
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .ghost-button,
+    .secondary-button,
+    .primary-button,
+    .danger-button {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .ghost-button {
+      color: var(--charcoal);
+      background: rgba(255, 255, 255, 0.45);
+      border-color: var(--line);
+    }
+
+    .secondary-button {
+      color: var(--charcoal);
+      background: var(--panel);
+      border-color: var(--line-strong);
+    }
+
+    .primary-button {
+      color: #fff;
+      background: var(--mint);
+      box-shadow: 0 10px 22px rgba(21, 124, 98, 0.22);
+    }
+
+    .primary-button:disabled,
+    .secondary-button:disabled,
+    .danger-button:disabled {
+      color: #9ca5a1;
+      background: #e8e2d8;
+      border-color: #d4ccbf;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .danger-button {
+      color: #fff;
+      background: var(--red);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .metric {
+      min-height: 104px;
+      padding: 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: 0 10px 30px rgba(32, 43, 40, 0.06);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 10px;
+      font-family: var(--mono);
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .metric small {
+      display: block;
+      margin-top: 10px;
+      color: var(--faint);
+      font-size: 12px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr) 340px;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      min-width: 0;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+
+    .panel-copy {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .country-search {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .input,
+    select {
+      width: 100%;
+      min-height: 36px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    .input:focus,
+    select:focus {
+      border-color: var(--mint);
+      box-shadow: 0 0 0 3px rgba(21, 124, 98, 0.12);
+    }
+
+    .country-list {
+      display: grid;
+      gap: 6px;
+      padding: 10px;
+    }
+
+    .country-item {
+      width: 100%;
+      min-height: 62px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      color: var(--ink);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .country-item:hover,
+    .country-item.active {
+      background: var(--panel-2);
+      border-color: var(--line-strong);
+    }
+
+    .country-name {
+      display: block;
+      font-weight: 900;
+      overflow-wrap: anywhere;
+    }
+
+    .country-meta {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      min-height: 24px;
+      align-items: center;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .status-pill.set {
+      color: var(--mint);
+      background: var(--mint-soft);
+    }
+
+    .status-pill.empty {
+      color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .editor-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .mode-tabs,
+    .calc-tabs {
+      display: inline-grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+      padding: 4px;
+      background: #ece5da;
+      border-radius: 6px;
+    }
+
+    .mode-tab,
+    .calc-tab {
+      min-height: 30px;
+      padding: 6px 12px;
+      color: var(--muted);
+      background: transparent;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .mode-tab.active,
+    .calc-tab.active {
+      color: var(--ink);
+      background: var(--panel);
+      box-shadow: 0 5px 14px rgba(32, 43, 40, 0.08);
+    }
+
+    .dirty-bar,
+    .error-bar,
+    .success-bar {
+      display: none;
+      margin: 12px 14px 0;
+      padding: 10px 12px;
+      border-radius: 6px;
+      line-height: 1.45;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .dirty-bar.show {
+      display: block;
+      color: var(--amber);
+      background: var(--amber-soft);
+      border: 1px solid #efc478;
+    }
+
+    .error-bar.show {
+      display: block;
+      color: var(--red);
+      background: var(--red-soft);
+      border: 1px solid #f0a59d;
+    }
+
+    .success-bar.show {
+      display: block;
+      color: var(--mint);
+      background: var(--mint-soft);
+      border: 1px solid #a9d7c5;
+    }
+
+    .price-groups {
+      display: grid;
+      gap: 14px;
+      padding: 14px;
+    }
+
+    .group {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .group-title {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      min-height: 42px;
+      padding: 10px 12px;
+      background: #f4efe6;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .group-title h3 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .group-title span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .price-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .price-table th,
+    .price-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .price-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .price-table th {
+      color: var(--muted);
+      background: #fbfaf6;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .variable-name {
+      font-weight: 900;
+    }
+
+    .mono {
+      font-family: var(--mono);
+    }
+
+    .stepper {
+      display: grid;
+      grid-template-columns: 30px minmax(72px, 1fr) 30px;
+      align-items: center;
+      width: 100%;
+      max-width: 162px;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .stepper button {
+      min-height: 34px;
+      color: var(--charcoal);
+      background: #f2ede4;
+      cursor: pointer;
+      font-family: var(--mono);
+      font-weight: 900;
+    }
+
+    .stepper input {
+      min-width: 0;
+      height: 34px;
+      padding: 4px 6px;
+      border: 0;
+      border-left: 1px solid var(--line);
+      border-right: 1px solid var(--line);
+      text-align: center;
+      outline: none;
+      font-family: var(--mono);
+      font-weight: 800;
+    }
+
+    .row-error {
+      display: none;
+      margin-top: 4px;
+      color: var(--red);
+      font-size: 11px;
+      line-height: 1.3;
+    }
+
+    .has-error .row-error {
+      display: block;
+    }
+
+    .has-error .stepper {
+      border-color: var(--red);
+      box-shadow: 0 0 0 3px rgba(175, 51, 38, 0.1);
+    }
+
+    .calculator {
+      position: sticky;
+      top: 18px;
+    }
+
+    .calc-body {
+      display: grid;
+      gap: 11px;
+      padding: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .result-box {
+      display: grid;
+      gap: 10px;
+      margin-top: 4px;
+      padding: 12px;
+      background: var(--charcoal);
+      color: #f8f4ec;
+      border-radius: 7px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      color: #cdd8d3;
+      font-size: 13px;
+    }
+
+    .result-row strong {
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 15px;
+    }
+
+    .result-row.highlight {
+      padding-top: 10px;
+      border-top: 1px solid rgba(255, 255, 255, 0.14);
+      color: #fff;
+    }
+
+    .result-row.highlight strong {
+      color: #f4cf8a;
+      font-size: 24px;
+    }
+
+    .unsaved-tag {
+      display: none;
+      width: fit-content;
+      padding: 5px 8px;
+      color: var(--amber);
+      background: var(--amber-soft);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .unsaved-tag.show {
+      display: inline-flex;
+    }
+
+    .empty-state,
+    .no-permission {
+      display: none;
+      min-height: 360px;
+      place-items: center;
+      padding: 26px;
+    }
+
+    .empty-state.show,
+    .no-permission.show {
+      display: grid;
+    }
+
+    .empty-card {
+      width: min(520px, 100%);
+      padding: 26px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      text-align: center;
+      box-shadow: var(--shadow);
+    }
+
+    .empty-card h2 {
+      margin: 0 0 10px;
+      font-size: 24px;
+    }
+
+    .empty-card p {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(21, 32, 29, 0.45);
+      z-index: 20;
+    }
+
+    .modal-backdrop.show {
+      display: grid;
+    }
+
+    .modal {
+      width: min(460px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: 0 30px 80px rgba(21, 32, 29, 0.3);
+      overflow: hidden;
+    }
+
+    .modal header {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .modal h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .modal-body {
+      padding: 16px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 14px 16px;
+      background: #f7f2e9;
+      border-top: 1px solid var(--line);
+    }
+
+    .toast {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      display: none;
+      min-width: 240px;
+      padding: 12px 14px;
+      color: #fff;
+      background: var(--charcoal);
+      border-radius: 7px;
+      box-shadow: 0 18px 50px rgba(32, 43, 40, 0.2);
+      font-weight: 800;
+      z-index: 30;
+    }
+
+    .toast.show {
+      display: block;
+      animation: toast-in 0.22s ease-out;
+    }
+
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .workspace-wrap.hidden,
+    .metrics.hidden,
+    .topbar.hidden {
+      display: none;
+    }
+
+    @media (max-width: 1220px) {
+      .workspace {
+        grid-template-columns: 220px minmax(0, 1fr);
+      }
+
+      .calculator {
+        position: static;
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .rail {
+        position: static;
+        height: auto;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .rail-section {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 12px;
+      }
+
+      .rail-label,
+      .rail-note {
+        display: none;
+      }
+
+      .nav-button {
+        width: auto;
+        margin: 0;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .country-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 640px) {
+      .main {
+        padding: 14px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .metrics,
+      .country-list,
+      .calc-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .panel-header {
+        display: grid;
+      }
+
+      .editor-actions {
+        justify-content: flex-start;
+      }
+
+      .price-table {
+        min-width: 720px;
+      }
+
+      .group {
+        overflow-x: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="rail" aria-label="代理商导航">
+      <div class="brand">
+        <div class="brand-mark">IP</div>
+        <div>
+          <strong>代理商工作台</strong>
+          <span>Static Proxy Agency</span>
+        </div>
+      </div>
+
+      <div class="rail-section">
+        <p class="rail-label">模块</p>
+        <a class="nav-button active" href="agent-price-config-list-detail-prototype.html" aria-current="page">
+          <span>价格设置</span><span class="nav-icon">01</span>
+        </a>
+        <a class="nav-button" href="agent-users-recharge-prototype.html">
+          <span>我的用户</span><span class="nav-icon">02</span>
+        </a>
+        <a class="nav-button" href="agent-sales-orders-prototype.html">
+          <span>销售订单</span><span class="nav-icon">03</span>
+        </a>
+        <a class="nav-button" href="agent-income-billing-prototype.html">
+          <span>我的收入</span><span class="nav-icon">04</span>
+        </a>
+      </div>
+
+      <div class="rail-note">
+        当前原型只覆盖 M01：国家级价格加价、最终售价试算、无权限态和未保存保护。
+      </div>
+    </aside>
+
+    <main class="main">
+      <section class="no-permission" id="noPermission">
+        <div class="empty-card">
+          <p class="eyebrow">Access Control</p>
+          <h2>当前账号未开通代理商权限</h2>
+          <p>如需开通代理商，请联系客户经理。页面不会展示任何代理商价格、国家、指标或钱包数据。</p>
+          <button class="primary-button" type="button" id="contactManager">联系客户经理</button>
+        </div>
+      </section>
+
+      <div id="workspaceContent">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">M01 · Price Markup Console</p>
+            <h1>代理商首页-价格设置</h1>
+            <p class="subtitle">按国家维护共享与独享价格。代理商只编辑加价差额，最终售价和预计价差实时计算，用户购买链路继续复用现有静态代理购买与 Checkout。</p>
+          </div>
+          <div class="toolbar">
+            <button class="ghost-button" type="button" id="togglePermission">模拟无权限</button>
+            <button class="ghost-button" type="button" id="simulateEmpty">模拟无可售国家</button>
+          </div>
+        </header>
+
+        <section class="metrics" aria-label="代理商指标">
+          <article class="metric">
+            <span>代理钱包余额</span>
+            <strong id="metricWallet">$12,340.00</strong>
+            <small>可用于给下级用户充值</small>
+          </article>
+          <article class="metric">
+            <span>本月销售额</span>
+            <strong>$89,120.00</strong>
+            <small>销售订单模块细化口径</small>
+          </article>
+          <article class="metric">
+            <span>本月价差收益</span>
+            <strong>$8,430.00</strong>
+            <small>最终以成交订单快照为准</small>
+          </article>
+          <article class="metric">
+            <span>下级用户数</span>
+            <strong>128</strong>
+            <small>仅统计已绑定 agency_id 用户</small>
+          </article>
+        </section>
+
+        <section class="empty-state" id="emptyState">
+          <div class="empty-card">
+            <p class="eyebrow">Country Catalog</p>
+            <h2>暂无可配置国家</h2>
+            <p>当前平台没有向该代理商开放可售国家价格。请联系平台配置国家价格后再维护代理加价。</p>
+            <button class="secondary-button" type="button" id="restoreCountries">恢复演示国家</button>
+          </div>
+        </section>
+
+        <section class="workspace workspace-wrap" id="workspace">
+          <aside class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">国家列表</h2>
+                <p class="panel-copy">只展示已有平台价格的可售国家</p>
+              </div>
+            </div>
+            <div class="country-search">
+              <input class="input" id="countrySearch" name="countrySearch" type="search" placeholder="搜索国家 / 代码" autocomplete="off">
+            </div>
+            <div class="country-list" id="countryList"></div>
+          </aside>
+
+          <section class="panel">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title" id="currentCountryTitle">价格设置</h2>
+                <p class="panel-copy">共享与独享共用同一套变量结构，保存时按当前国家整体提交。</p>
+              </div>
+              <div class="editor-actions">
+                <div class="mode-tabs" role="tablist" aria-label="共享独享切换">
+                  <button class="mode-tab active" type="button" data-mode="shared">共享</button>
+                  <button class="mode-tab" type="button" data-mode="exclusive">独享</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="dirty-bar" id="dirtyBar">当前国家有未保存加价，请保存后生效。</div>
+            <div class="error-bar" id="errorBar"></div>
+            <div class="success-bar" id="successBar"></div>
+
+            <div class="price-groups" id="priceGroups"></div>
+
+            <div class="panel-header">
+              <div>
+                <p class="panel-title">当前国家保存</p>
+                <p class="panel-copy">清空只改本地草稿，点击保存后才持久化。</p>
+              </div>
+              <div class="editor-actions">
+                <button class="secondary-button" type="button" id="clearMarkup">清空当前国家加价</button>
+                <button class="primary-button" type="button" id="saveCountry" disabled>保存当前国家</button>
+              </div>
+            </div>
+          </section>
+
+          <aside class="panel calculator">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title">价格计算器</h2>
+                <p class="panel-copy">只读试算，不反写价格配置</p>
+              </div>
+              <span class="unsaved-tag" id="calcUnsaved">含未保存加价</span>
+            </div>
+
+            <div class="calc-body">
+              <div class="calc-tabs" role="tablist" aria-label="计算器共享独享">
+                <button class="calc-tab active" type="button" data-calc-mode="shared">共享</button>
+                <button class="calc-tab" type="button" data-calc-mode="exclusive">独享</button>
+              </div>
+
+              <div class="calc-grid">
+                <div class="field">
+                  <label for="calcCountry">国家</label>
+                  <select id="calcCountry" name="calcCountry"></select>
+                </div>
+                <div class="field">
+                  <label for="calcQuality">品质</label>
+                  <select id="calcQuality" name="calcQuality"></select>
+                </div>
+                <div class="field">
+                  <label for="calcUdp">UDP</label>
+                  <select id="calcUdp" name="calcUdp"></select>
+                </div>
+                <div class="field">
+                  <label for="calcBandwidth">带宽</label>
+                  <select id="calcBandwidth" name="calcBandwidth"></select>
+                </div>
+                <div class="field">
+                  <label for="calcConnection">连接数</label>
+                  <select id="calcConnection" name="calcConnection"></select>
+                </div>
+                <div class="field">
+                  <label for="calcDays">购买天数</label>
+                  <select id="calcDays" name="calcDays"></select>
+                </div>
+                <div class="field">
+                  <label for="calcQty">购买数量</label>
+                  <select id="calcQty" name="calcQty"></select>
+                </div>
+              </div>
+
+              <div class="result-box" aria-live="polite">
+                <div class="result-row">
+                  <span>平台价格</span>
+                  <strong id="calcPlatform">$0.00</strong>
+                </div>
+                <div class="result-row">
+                  <span>代理加价</span>
+                  <strong id="calcMarkup">$0.00</strong>
+                </div>
+                <div class="result-row highlight">
+                  <span>最终售价</span>
+                  <strong id="calcFinal">$0.00</strong>
+                </div>
+                <div class="result-row">
+                  <span>预计价差</span>
+                  <strong id="calcDiff">$0.00</strong>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="clearModal" role="dialog" aria-modal="true" aria-labelledby="clearTitle">
+    <div class="modal">
+      <header>
+        <h2 id="clearTitle">清空当前国家加价</h2>
+      </header>
+      <div class="modal-body" id="clearBody"></div>
+      <div class="modal-actions">
+        <button class="secondary-button" type="button" data-close-modal>取消</button>
+        <button class="danger-button" type="button" id="confirmClear">确认清空</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="unsavedModal" role="dialog" aria-modal="true" aria-labelledby="unsavedTitle">
+    <div class="modal">
+      <header>
+        <h2 id="unsavedTitle">当前国家有未保存加价</h2>
+      </header>
+      <div class="modal-body">离开当前国家后，未保存的代理加价会被丢弃。</div>
+      <div class="modal-actions">
+        <button class="secondary-button" type="button" data-close-modal>留在当前国家</button>
+        <button class="danger-button" type="button" id="confirmSwitch">继续切换</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+    const groups = [
+      {
+        id: "quality",
+        title: "品质",
+        desc: "基础 / 标准 / 高端",
+        type: "amount",
+        options: [
+          { key: "basic", label: "基础", shared: 8.4, exclusive: 11.6 },
+          { key: "standard", label: "标准", shared: 10, exclusive: 14.2 },
+          { key: "premium", label: "高端", shared: 12.8, exclusive: 18.5 }
+        ]
+      },
+      {
+        id: "udp",
+        title: "UDP",
+        desc: "关闭 / 开启",
+        type: "amount",
+        options: [
+          { key: "off", label: "关闭", shared: 0, exclusive: 0 },
+          { key: "on", label: "开启", shared: 0.2, exclusive: 0.32 }
+        ]
+      },
+      {
+        id: "bandwidth",
+        title: "带宽",
+        desc: "按月度带宽包计价",
+        type: "amount",
+        options: [
+          { key: "250", label: "250 GB", shared: 0, exclusive: 0 },
+          { key: "1000", label: "1,000 GB", shared: 0.4, exclusive: 0.65 },
+          { key: "5000", label: "5,000 GB", shared: 1.8, exclusive: 2.9 },
+          { key: "unlimited", label: "Unlimited", shared: 4.8, exclusive: 7.2 }
+        ]
+      },
+      {
+        id: "connection",
+        title: "连接数",
+        desc: "每 IP 并发连接数",
+        type: "amount",
+        options: [
+          { key: "50", label: "50", shared: 0, exclusive: 0 },
+          { key: "100", label: "100", shared: 0.03, exclusive: 0.04 },
+          { key: "200", label: "200", shared: 0.06, exclusive: 0.08 },
+          { key: "500", label: "500", shared: 0.12, exclusive: 0.18 }
+        ]
+      },
+      {
+        id: "days",
+        title: "购买天数倍率",
+        desc: "对资源单价的周期倍率",
+        type: "coeff",
+        options: [
+          { key: "15", label: "15 天", shared: 0.58, exclusive: 0.58 },
+          { key: "30", label: "30 天", shared: 1, exclusive: 1 },
+          { key: "60", label: "60 天", shared: 2, exclusive: 2 },
+          { key: "90", label: "90 天", shared: 2.85, exclusive: 2.85 },
+          { key: "365", label: "1 年", shared: 12, exclusive: 12 }
+        ]
+      },
+      {
+        id: "quantity",
+        title: "购买数量系数",
+        desc: "数量折扣或加价系数",
+        type: "coeff",
+        options: [
+          { key: "1", label: "1+", shared: 1, exclusive: 1 },
+          { key: "50", label: "50+", shared: 0.98, exclusive: 0.98 },
+          { key: "100", label: "100+", shared: 0.95, exclusive: 0.95 },
+          { key: "500", label: "500+", shared: 0.9, exclusive: 0.9 }
+        ]
+      }
+    ];
+
+    const countrySeed = [
+      { code: "US", name: "United States", updatedAt: "2026-06-06", configured: true, seed: 0.02 },
+      { code: "JP", name: "Japan", updatedAt: "-", configured: false, seed: 0 },
+      { code: "DE", name: "Germany", updatedAt: "2026-06-01", configured: true, seed: 0.01 },
+      { code: "SG", name: "Singapore", updatedAt: "-", configured: false, seed: 0 },
+      { code: "GB", name: "United Kingdom", updatedAt: "2026-05-28", configured: true, seed: 0.03 }
+    ];
+
+    const state = {
+      isAgent: true,
+      emptyMode: false,
+      countries: [],
+      countryCode: "US",
+      mode: "shared",
+      calcMode: "shared",
+      calcCountryCode: "US",
+      calcSelections: {
+        quality: "standard",
+        udp: "off",
+        bandwidth: "1000",
+        connection: "200",
+        days: "30",
+        quantity: "100"
+      },
+      search: "",
+      dirty: false,
+      pendingCountry: null,
+      savedSnapshot: "",
+      lastMessage: ""
+    };
+
+    function buildCountries() {
+      return countrySeed.map(country => ({
+        ...country,
+        markups: {
+          shared: buildMarkup(country.seed, "shared"),
+          exclusive: buildMarkup(country.seed + 0.01, "exclusive")
+        }
+      }));
+    }
+
+    function buildMarkup(seed, mode) {
+      const markups = {};
+      groups.forEach(group => {
+        markups[group.id] = {};
+        group.options.forEach((option, index) => {
+          const basis = group.type === "amount" ? seed * (index % 2) : seed / 2 * (index === 0 ? 0 : 1);
+          markups[group.id][option.key] = mode === "exclusive" ? round(basis + (basis ? 0.01 : 0), group.type) : round(basis, group.type);
+        });
+      });
+      return markups;
+    }
+
+    function round(value, type = "amount") {
+      const scale = type === "amount" ? 100 : 100;
+      return Math.round((Number(value) || 0) * scale) / scale;
+    }
+
+    function money(value) {
+      return `$${(Number(value) || 0).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      })}`;
+    }
+
+    function currentCountry() {
+      return state.countries.find(country => country.code === state.countryCode) || state.countries[0];
+    }
+
+    function platformValue(group, option, mode = state.mode) {
+      const modifier = countryPlatformModifier(currentCountry()?.code || "US");
+      const raw = option[mode] * modifier;
+      return round(raw, group.type);
+    }
+
+    function countryPlatformModifier(code) {
+      return { US: 1, JP: 1.08, DE: 0.96, SG: 1.14, GB: 1.02 }[code] || 1;
+    }
+
+    function markupValue(country, mode, groupId, optionKey) {
+      return round(country.markups[mode][groupId][optionKey], groupType(groupId));
+    }
+
+    function groupType(groupId) {
+      return groups.find(group => group.id === groupId)?.type || "amount";
+    }
+
+    function formatValue(value, type) {
+      if (type === "amount") return money(value);
+      return Number(value).toFixed(2);
+    }
+
+    function formatMarkup(value, type) {
+      if (type === "amount") return `+${money(value)}`;
+      return `+${Number(value).toFixed(2)}`;
+    }
+
+    function serialize() {
+      return JSON.stringify(state.countries.map(country => ({
+        code: country.code,
+        markups: country.markups,
+        updatedAt: country.updatedAt,
+        configured: country.configured
+      })));
+    }
+
+    function setSnapshot() {
+      state.savedSnapshot = serialize();
+      state.dirty = false;
+    }
+
+    function updateDirty() {
+      state.dirty = serialize() !== state.savedSnapshot;
+    }
+
+    function hasInvalid() {
+      return Boolean(document.querySelector(".has-error"));
+    }
+
+    function filteredCountries() {
+      if (state.emptyMode) return [];
+      const q = state.search.trim().toLowerCase();
+      if (!q) return state.countries;
+      return state.countries.filter(country =>
+        country.name.toLowerCase().includes(q) || country.code.toLowerCase().includes(q)
+      );
+    }
+
+    function render() {
+      document.getElementById("noPermission").classList.toggle("show", !state.isAgent);
+      document.getElementById("workspaceContent").hidden = !state.isAgent;
+      if (!state.isAgent) return;
+
+      const hasCountries = filteredCountries().length > 0 || (!state.search && !state.emptyMode && state.countries.length > 0);
+      document.getElementById("emptyState").classList.toggle("show", !hasCountries);
+      document.getElementById("workspace").classList.toggle("hidden", !hasCountries);
+
+      renderCountries();
+      renderEditor();
+      renderCalculator();
+      updateBars();
+    }
+
+    function renderCountries() {
+      const list = document.getElementById("countryList");
+      const countries = filteredCountries();
+      if (!countries.length) {
+        list.innerHTML = `<div class="panel-copy">未找到匹配国家</div>`;
+        return;
+      }
+      list.innerHTML = countries.map(country => `
+        <button class="country-item ${country.code === state.countryCode ? "active" : ""}" type="button" data-country="${country.code}">
+          <span>
+            <span class="country-name">${country.name}</span>
+            <span class="country-meta">${country.code} · ${country.updatedAt === "-" ? "未保存" : country.updatedAt}</span>
+          </span>
+          <span class="status-pill ${country.configured ? "set" : "empty"}">${country.configured ? "已设置" : "未设置"}</span>
+        </button>
+      `).join("");
+    }
+
+    function renderEditor() {
+      const country = currentCountry();
+      if (!country) return;
+      document.getElementById("currentCountryTitle").textContent = `${country.name} (${country.code})`;
+      document.querySelectorAll(".mode-tab").forEach(tab => {
+        tab.classList.toggle("active", tab.dataset.mode === state.mode);
+      });
+
+      document.getElementById("priceGroups").innerHTML = groups.map(group => `
+        <section class="group">
+          <div class="group-title">
+            <h3>${group.title}</h3>
+            <span>${group.desc}</span>
+          </div>
+          <table class="price-table">
+            <thead>
+              <tr>
+                <th style="width:21%;">变量名</th>
+                <th style="width:16%;">平台价格</th>
+                <th style="width:26%;">代理加价</th>
+                <th style="width:18%;">最终售价</th>
+                <th style="width:19%;">预计价差</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${group.options.map(option => renderPriceRow(country, group, option)).join("")}
+            </tbody>
+          </table>
+        </section>
+      `).join("");
+    }
+
+    function renderPriceRow(country, group, option) {
+      const platform = platformValue(group, option);
+      const markup = markupValue(country, state.mode, group.id, option.key);
+      const final = round(platform + markup, group.type);
+      const inputId = `markup-${state.mode}-${group.id}-${option.key}`;
+      return `
+        <tr data-row="${group.id}:${option.key}">
+          <td>
+            <div class="variable-name">${option.label}</div>
+            <div class="country-meta">${group.id}.${option.key}</div>
+          </td>
+          <td class="mono">${formatValue(platform, group.type)}</td>
+          <td>
+            <div class="stepper" data-stepper>
+              <button type="button" aria-label="减少 ${option.label} 加价" data-step="-1" data-group="${group.id}" data-option="${option.key}">-</button>
+              <input id="${inputId}" name="${inputId}" value="${group.type === "amount" ? markup.toFixed(2) : markup.toFixed(2)}" inputmode="decimal" data-markup-input data-group="${group.id}" data-option="${option.key}" aria-label="${option.label} 代理加价">
+              <button type="button" aria-label="增加 ${option.label} 加价" data-step="1" data-group="${group.id}" data-option="${option.key}">+</button>
+            </div>
+            <div class="row-error">代理加价不能小于 0，且必须是数字。</div>
+          </td>
+          <td class="mono">${formatValue(final, group.type)}</td>
+          <td class="mono">${formatMarkup(markup, group.type)}</td>
+        </tr>
+      `;
+    }
+
+    function renderCalculator() {
+      const country = currentCountry();
+      if (!country) return;
+      if (!state.calcCountryCode) state.calcCountryCode = country.code;
+      document.querySelectorAll(".calc-tab").forEach(tab => {
+        tab.classList.toggle("active", tab.dataset.calcMode === state.calcMode);
+      });
+      fillSelect("calcCountry", state.countries, state.calcCountryCode, item => [item.code, `${item.name} (${item.code})`]);
+      fillSelect("calcQuality", groups[0].options, state.calcSelections.quality, item => [item.key, item.label]);
+      fillSelect("calcUdp", groups[1].options, state.calcSelections.udp, item => [item.key, item.label]);
+      fillSelect("calcBandwidth", groups[2].options, state.calcSelections.bandwidth, item => [item.key, item.label]);
+      fillSelect("calcConnection", groups[3].options, state.calcSelections.connection, item => [item.key, item.label]);
+      fillSelect("calcDays", groups[4].options, state.calcSelections.days, item => [item.key, item.label]);
+      fillSelect("calcQty", groups[5].options, state.calcSelections.quantity, item => [item.key, item.label]);
+      calculate();
+    }
+
+    function fillSelect(id, items, value, map, preserve = true) {
+      const select = document.getElementById(id);
+      const previous = preserve ? select.value : "";
+      select.innerHTML = items.map(item => {
+        const [optionValue, label] = map(item);
+        return `<option value="${optionValue}">${label}</option>`;
+      }).join("");
+      select.value = previous || value;
+      if (![...select.options].some(option => option.value === select.value)) {
+        select.value = value;
+      }
+    }
+
+    function getOption(groupId, key) {
+      return groups.find(group => group.id === groupId).options.find(option => option.key === key);
+    }
+
+    function calculate() {
+      const selectedCountryCode = state.calcCountryCode || document.getElementById("calcCountry").value || state.countryCode;
+      const country = state.countries.find(item => item.code === selectedCountryCode) || currentCountry();
+      const mode = state.calcMode;
+      const quality = getOption("quality", state.calcSelections.quality);
+      const udp = getOption("udp", state.calcSelections.udp);
+      const bandwidth = getOption("bandwidth", state.calcSelections.bandwidth);
+      const connection = getOption("connection", state.calcSelections.connection);
+      const days = getOption("days", state.calcSelections.days);
+      const qty = getOption("quantity", state.calcSelections.quantity);
+      const platformBase = [
+        ["quality", quality],
+        ["udp", udp],
+        ["bandwidth", bandwidth],
+        ["connection", connection]
+      ].reduce((sum, [groupId, option]) => {
+        const group = groups.find(item => item.id === groupId);
+        return sum + option[mode] * countryPlatformModifier(country.code);
+      }, 0);
+      const platformCoeff = days[mode] * qty[mode];
+      const markupBase = [
+        ["quality", quality],
+        ["udp", udp],
+        ["bandwidth", bandwidth],
+        ["connection", connection]
+      ].reduce((sum, [groupId, option]) => {
+        return sum + country.markups[mode][groupId][option.key];
+      }, 0);
+      const markupCoeff = country.markups[mode].days[days.key] + country.markups[mode].quantity[qty.key];
+      const platform = round(platformBase * platformCoeff * 100, "amount");
+      const markup = round((markupBase * platformCoeff * 100) + (platformBase * markupCoeff * 100), "amount");
+      const finalPrice = round(platform + markup, "amount");
+      document.getElementById("calcPlatform").textContent = money(platform);
+      document.getElementById("calcMarkup").textContent = money(markup);
+      document.getElementById("calcFinal").textContent = money(finalPrice);
+      document.getElementById("calcDiff").textContent = money(markup);
+      document.getElementById("calcUnsaved").classList.toggle("show", state.dirty);
+    }
+
+    function updateBars() {
+      updateDirty();
+      document.getElementById("dirtyBar").classList.toggle("show", state.dirty);
+      document.getElementById("saveCountry").disabled = !state.dirty || hasInvalid();
+      document.getElementById("calcUnsaved").classList.toggle("show", state.dirty);
+    }
+
+    function showToast(text) {
+      const toast = document.getElementById("toast");
+      toast.textContent = text;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2400);
+    }
+
+    function showSuccess(text) {
+      const el = document.getElementById("successBar");
+      el.textContent = text;
+      el.classList.add("show");
+      window.setTimeout(() => el.classList.remove("show"), 2200);
+    }
+
+    function showError(text) {
+      const el = document.getElementById("errorBar");
+      el.textContent = text;
+      el.classList.add("show");
+      window.setTimeout(() => el.classList.remove("show"), 2600);
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add("show");
+    }
+
+    function closeModals() {
+      document.querySelectorAll(".modal-backdrop").forEach(modal => modal.classList.remove("show"));
+    }
+
+    function changeCountry(code) {
+      if (state.dirty) {
+        state.pendingCountry = code;
+        openModal("unsavedModal");
+        return;
+      }
+      state.countryCode = code;
+      state.calcCountryCode = code;
+      render();
+    }
+
+    function applyMarkup(groupId, optionKey, next) {
+      const country = currentCountry();
+      const type = groupType(groupId);
+      const value = round(next, type);
+      country.markups[state.mode][groupId][optionKey] = value;
+      renderEditor();
+      validateRows();
+      updateBars();
+      calculate();
+    }
+
+    function validateRows() {
+      document.querySelectorAll("[data-markup-input]").forEach(input => {
+        const value = Number(input.value);
+        const row = input.closest("tr");
+        row.classList.toggle("has-error", Number.isNaN(value) || value < 0);
+      });
+      updateBars();
+    }
+
+    document.addEventListener("click", event => {
+      const countryButton = event.target.closest("[data-country]");
+      if (countryButton) {
+        changeCountry(countryButton.dataset.country);
+      }
+
+      const modeTab = event.target.closest("[data-mode]");
+      if (modeTab) {
+        state.mode = modeTab.dataset.mode;
+        renderEditor();
+        updateBars();
+      }
+
+      const calcTab = event.target.closest("[data-calc-mode]");
+      if (calcTab) {
+        state.calcMode = calcTab.dataset.calcMode;
+        calculate();
+        document.querySelectorAll(".calc-tab").forEach(tab => {
+          tab.classList.toggle("active", tab.dataset.calcMode === state.calcMode);
+        });
+      }
+
+      const stepButton = event.target.closest("[data-step]");
+      if (stepButton) {
+        const country = currentCountry();
+        const groupId = stepButton.dataset.group;
+        const optionKey = stepButton.dataset.option;
+        const type = groupType(groupId);
+        const step = type === "amount" ? 0.01 : 0.01;
+        const current = markupValue(country, state.mode, groupId, optionKey);
+        applyMarkup(groupId, optionKey, Math.max(0, current + Number(stepButton.dataset.step) * step));
+      }
+
+      if (event.target.id === "clearMarkup") {
+        const country = currentCountry();
+        document.getElementById("clearBody").textContent = `确认清空 ${country.name} (${country.code}) 下共享与独享的所有代理加价？清空后需要点击保存才会生效。`;
+        openModal("clearModal");
+      }
+
+      if (event.target.id === "confirmClear") {
+        const country = currentCountry();
+        ["shared", "exclusive"].forEach(mode => {
+          groups.forEach(group => {
+            group.options.forEach(option => {
+              country.markups[mode][group.id][option.key] = 0;
+            });
+          });
+        });
+        closeModals();
+        render();
+        showToast("当前国家加价已清空，请保存后生效");
+      }
+
+      if (event.target.id === "saveCountry") {
+        const country = currentCountry();
+        if (hasInvalid()) {
+          showError("存在非法加价，无法保存。");
+          return;
+        }
+        country.updatedAt = "2026-06-06";
+        country.configured = true;
+        setSnapshot();
+        render();
+        showSuccess("保存成功，当前国家加价已生效。");
+        showToast("保存成功");
+      }
+
+      if (event.target.id === "confirmSwitch") {
+        state.countries = JSON.parse(state.savedSnapshot).map(saved => {
+          const base = countrySeed.find(country => country.code === saved.code) || saved;
+          return { ...base, ...saved };
+        });
+        state.countryCode = state.pendingCountry;
+        state.calcCountryCode = state.pendingCountry;
+        state.pendingCountry = null;
+        closeModals();
+        render();
+      }
+
+      if (event.target.matches("[data-close-modal]") || event.target.classList.contains("modal-backdrop")) {
+        closeModals();
+      }
+
+      if (event.target.id === "togglePermission") {
+        state.isAgent = !state.isAgent;
+        event.target.textContent = state.isAgent ? "模拟无权限" : "恢复代理权限";
+        render();
+      }
+
+      if (event.target.id === "simulateEmpty") {
+        state.emptyMode = true;
+        render();
+      }
+
+      if (event.target.id === "restoreCountries") {
+        state.emptyMode = false;
+        render();
+      }
+
+      if (event.target.id === "contactManager") {
+        showToast("已打开客户经理联系入口");
+      }
+    });
+
+    document.addEventListener("input", event => {
+      if (event.target.id === "countrySearch") {
+        state.search = event.target.value;
+        renderCountries();
+      }
+
+      if (event.target.matches("[data-markup-input]")) {
+        const input = event.target;
+        const value = Number(input.value);
+        const row = input.closest("tr");
+        row.classList.toggle("has-error", Number.isNaN(value) || value < 0);
+        if (!Number.isNaN(value) && value >= 0) {
+          const country = currentCountry();
+          const groupId = input.dataset.group;
+          const optionKey = input.dataset.option;
+          country.markups[state.mode][groupId][optionKey] = round(value, groupType(groupId));
+          renderEditor();
+          calculate();
+        }
+        updateBars();
+      }
+    });
+
+    document.addEventListener("change", event => {
+      if (event.target.id === "calcCountry") {
+        state.calcCountryCode = event.target.value;
+      }
+      if (event.target.id === "calcQuality") {
+        state.calcSelections.quality = event.target.value;
+      }
+      if (event.target.id === "calcUdp") {
+        state.calcSelections.udp = event.target.value;
+      }
+      if (event.target.id === "calcBandwidth") {
+        state.calcSelections.bandwidth = event.target.value;
+      }
+      if (event.target.id === "calcConnection") {
+        state.calcSelections.connection = event.target.value;
+      }
+      if (event.target.id === "calcDays") {
+        state.calcSelections.days = event.target.value;
+      }
+      if (event.target.id === "calcQty") {
+        state.calcSelections.quantity = event.target.value;
+      }
+      if (event.target.closest(".calculator")) {
+        calculate();
+      }
+    });
+
+    state.countries = buildCountries();
+    setSnapshot();
+    render();
+  </script>
+</body>
+</html>

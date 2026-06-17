@@ -17,6 +17,79 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 }
 
+/* Mermaid 点击放大预览 */
+.docusaurus-mermaid-container {
+  cursor: zoom-in;
+}
+
+.docusaurus-mermaid-container * {
+  cursor: inherit;
+}
+
+.mermaid-zoom-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  /* 提高不透明度，避免背后的页面文字/侧边栏透过来干扰阅读 */
+  background: rgba(0, 0, 0, 0.92);
+  overflow: hidden;
+}
+.mermaid-zoom-overlay.is-open {
+  display: flex;
+}
+
+.mermaid-zoom-stage {
+  cursor: grab;
+  transform-origin: center center;
+  will-change: transform;
+  user-select: none;
+  /* Mermaid 的 svg 背景透明，放在暗色遮罩上会糊成一团。这里给它一张
+     白色“纸面”卡片 + 内边距，确保任何图表（含透明背景）都清晰可读。 */
+  background: #ffffff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.45);
+}
+.mermaid-zoom-stage svg {
+  display: block;
+  max-width: none;
+  max-height: none;
+}
+
+.mermaid-zoom-close {
+  position: fixed;
+  top: 16px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  line-height: 1;
+}
+.mermaid-zoom-close:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.mermaid-zoom-hint {
+  position: fixed;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  pointer-events: none;
+}
+
 /* For readability concerns, you should choose a lighter palette in dark mode. */
 [data-theme='dark'] {
   --ifm-color-primary: #25c2a0;

@@ -1,0 +1,9 @@
+{
+  "label": "2FA",
+  "position": 1,
+  "className": "red",
+  "link": {
+    "type": "generated-index",
+    "description": "2FA逻辑"
+  }
+}

@@ -1,0 +1,1958 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IPWeb 静态代理 Continue 后订单流程</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --text: #162033;
+      --muted: #667085;
+      --line: #d8e1ed;
+      --primary: #1769aa;
+      --primary-soft: #e7f1fb;
+      --green: #13795b;
+      --green-soft: #e7f6ef;
+      --orange: #a85d00;
+      --orange-soft: #fff3df;
+      --red: #b42318;
+      --red-soft: #fff0ed;
+      --shadow: 0 10px 26px rgba(22, 32, 51, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: var(--bg);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      padding: 22px 18px;
+      background: #101827;
+      color: #dbe4f0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: #2e90fa;
+      color: #fff;
+    }
+
+    .nav-title {
+      margin: 20px 0 8px;
+      color: #8996aa;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      margin-bottom: 4px;
+      padding: 10px 12px;
+      border-radius: 7px;
+      color: #c8d2e0;
+    }
+
+    .nav-item.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 24px;
+    }
+
+    .route-view[hidden] {
+      display: none !important;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .page-title h1 {
+      margin: 0 0 6px;
+      font-size: 28px;
+      line-height: 1.2;
+    }
+
+    .page-title p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .badge,
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .status-pill {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .status-pill.paid {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .status-pill.cancelled,
+    .status-pill.expired {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .status-pill.autoRenewalFailed {
+      background: var(--orange-soft);
+      color: var(--orange);
+    }
+
+    .checkout-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 20px;
+      align-items: start;
+      max-width: 1120px;
+    }
+
+    .panel,
+    .readonly-summary {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel {
+      padding: 18px;
+    }
+
+    .readonly-summary {
+      position: sticky;
+      top: 24px;
+      padding: 18px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .panel-head h2,
+    .readonly-summary h2 {
+      margin: 0 0 6px;
+      font-size: 20px;
+    }
+
+    .panel-head p,
+    .muted {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .notice {
+      border-radius: 7px;
+      padding: 10px 12px;
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .notice.ok {
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .notice.warn {
+      background: var(--orange-soft);
+      color: var(--orange);
+    }
+
+    .notice.error {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .notice-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .summary-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 40px;
+      border-bottom: 1px solid #e7edf5;
+    }
+
+    .summary-row span {
+      color: var(--muted);
+    }
+
+    .summary-row strong {
+      text-align: right;
+    }
+
+    .total-row {
+      margin-top: 14px;
+      border-bottom: 0;
+      font-size: 18px;
+    }
+
+    .lock-box {
+      margin: 14px 0 0;
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .payment-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .wallet-card,
+    .online-card,
+    .prototype-controls {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfdff;
+      padding: 14px;
+    }
+
+    .wallet-card {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 74px;
+    }
+
+    .wallet-card.active {
+      border-color: #9cc9ee;
+      background: #f6fbff;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .section-head h3 {
+      margin: 0 0 4px;
+      font-size: 17px;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .wallet-option {
+      display: flex;
+      grid-template-columns: none;
+      align-items: flex-start;
+      gap: 10px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .wallet-option input {
+      flex: 0 0 auto;
+      width: 18px;
+      min-height: 18px;
+      margin-top: 2px;
+      accent-color: var(--primary);
+    }
+
+    .wallet-copy strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .wallet-hint {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.45;
+    }
+
+    .wallet-hint.ok {
+      color: var(--green);
+    }
+
+    .wallet-hint.warn {
+      color: var(--orange);
+    }
+
+    .wallet-hint.error {
+      color: var(--red);
+    }
+
+    .wallet-balance {
+      flex: 0 0 auto;
+      min-width: 128px;
+      text-align: right;
+    }
+
+    .wallet-balance span {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .wallet-balance strong {
+      color: var(--primary);
+      font-size: 19px;
+    }
+
+    .prototype-controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      background: #f7f9fc;
+    }
+
+    .online-card[hidden] {
+      display: none !important;
+    }
+
+    .payment-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      color: var(--text);
+      padding: 9px 11px;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      min-height: 42px;
+      border: 0;
+      border-radius: 7px;
+      padding: 0 16px;
+      font-weight: 800;
+    }
+
+    .primary-btn {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .secondary-btn {
+      background: #edf2f7;
+      color: var(--text);
+    }
+
+    .danger-btn {
+      background: var(--red-soft);
+      color: var(--red);
+    }
+
+    .ghost-btn {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--line);
+    }
+
+    .order-shell {
+      display: grid;
+      gap: 14px;
+      max-width: 1120px;
+    }
+
+    .order-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .order-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    .order-filter-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-tab {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--muted);
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .filter-tab.active {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .order-search-label {
+      display: grid;
+      gap: 6px;
+      min-width: 260px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .order-search-label input {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+    }
+
+    .order-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: visible;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+    }
+
+    .order-table th,
+    .order-table td {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .order-table th {
+      background: #f8fbff;
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .order-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .order-identity strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 15px;
+    }
+
+    .order-spec-summary {
+      max-width: 360px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 700;
+    }
+
+    .amount-with-tooltip {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .amount-info {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 1px solid #9ecaf0;
+      background: var(--primary-soft);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .amount-tooltip {
+      display: none;
+      position: absolute;
+      top: 26px;
+      right: -8px;
+      z-index: 10;
+      min-width: 190px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+      padding: 10px;
+      color: var(--text);
+    }
+
+    .amount-with-tooltip:hover .amount-tooltip,
+    .amount-with-tooltip:focus-within .amount-tooltip {
+      display: block;
+    }
+
+    .amount-tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 0;
+      font-size: 12px;
+    }
+
+    .lock-remaining {
+      color: #b26100;
+      font-weight: 800;
+    }
+
+    .detail-title h2 {
+      margin: 0 0 8px;
+    }
+
+    .order-empty {
+      margin-top: 0;
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .detail-item {
+      min-height: 66px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 10px;
+    }
+
+    .detail-item span {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .detail-section-title {
+      margin: 18px 0 8px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .status-history {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 0;
+      list-style: none;
+    }
+
+    .status-history li {
+      display: grid;
+      grid-template-columns: 96px minmax(0, 1fr);
+      gap: 12px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fff;
+      padding: 10px;
+      line-height: 1.45;
+    }
+
+    .status-history time {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .prototype-note {
+      max-width: 1120px;
+      margin-bottom: 16px;
+    }
+
+    @media (max-width: 1180px) {
+      .checkout-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .readonly-summary {
+        position: static;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        display: none;
+      }
+
+      .main {
+        padding: 16px;
+      }
+
+      .topbar,
+      .panel-head,
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .payment-grid,
+      .prototype-controls,
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .order-controls {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .order-search-label {
+        min-width: 0;
+      }
+
+      .order-table {
+        display: block;
+        overflow-x: auto;
+      }
+
+      .wallet-card {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .wallet-balance {
+        min-width: 0;
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">IP</span> IPWeb</div>
+      <div class="nav-title">Products</div>
+      <div class="nav-item">Dashboard</div>
+      <div class="nav-item active">Static Residential</div>
+      <div class="nav-item">Rotating Residential</div>
+      <div class="nav-title">Billing</div>
+      <div class="nav-item active">Orders</div>
+      <div class="nav-item">Subscription</div>
+      <div class="nav-item">Coupons</div>
+    </aside>
+
+    <main class="main">
+      <div class="notice ok prototype-note">
+        入口状态：用户已在购买配置页完成必填项并点击 Continue。系统已创建待支付订单、生成订单号，并锁定库存 15 分钟。
+      </div>
+
+      <section id="checkoutView" class="route-view">
+        <div class="topbar">
+          <div class="page-title">
+            <h1>Checkout</h1>
+            <p>Checkout 页面只处理支付；套餐规格已经在购买配置页固定，当前页不可修改。</p>
+          </div>
+          <div class="toolbar">
+            <button class="secondary-btn" data-view-target="orders" type="button">查看订单</button>
+          </div>
+        </div>
+
+        <div class="checkout-layout">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Payment Method</h2>
+                <p>选择或补充支付信息后完成当前待支付订单。</p>
+              </div>
+              <span class="badge">Payment Only</span>
+            </div>
+
+            <div class="payment-stack">
+              <section class="wallet-card active" id="walletCard" aria-label="钱包抵扣">
+                <label class="wallet-option">
+                  <input id="useWallet" type="checkbox" checked>
+                  <span class="wallet-copy">
+                    <strong>使用钱包余额</strong>
+                    <span class="wallet-hint ok" id="walletNotice">钱包余额充足，可直接支付。</span>
+                  </span>
+                </label>
+                <div class="wallet-balance">
+                  <span>钱包余额</span>
+                  <strong id="walletBalance">$0.00</strong>
+                </div>
+              </section>
+
+              <section class="prototype-controls" aria-label="原型支付场景">
+                <label>
+                  原型钱包余额
+                  <select id="walletScenario">
+                    <option value="split">余额不足：钱包 + 在线补差</option>
+                    <option value="enough">余额充足：钱包全额支付</option>
+                    <option value="zero">余额为 0：在线全额支付</option>
+                  </select>
+                </label>
+                <label>
+                  在线支付模拟
+                  <select id="onlinePaymentOutcome">
+                    <option value="success">在线支付成功</option>
+                    <option value="fail">在线支付失败，释放钱包预扣</option>
+                  </select>
+                </label>
+              </section>
+
+              <section class="online-card" id="onlinePaymentSection" aria-label="在线支付补差">
+                <div class="section-head">
+                  <div>
+                    <h3>在线支付</h3>
+                    <p id="onlinePaymentHint">钱包余额不足，请选择在线支付补齐差价。</p>
+                  </div>
+                  <span class="badge" id="onlinePayBadge">$0.00</span>
+                </div>
+                <div class="payment-grid">
+                  <label>
+                    在线支付方式
+                    <select id="onlinePaymentMethod">
+                      <option value="Credit Card">Credit Card</option>
+                      <option value="PayPal">PayPal</option>
+                      <option value="Bank Transfer">Bank Transfer</option>
+                    </select>
+                  </label>
+                  <label>
+                    账单国家或地区
+                    <select id="billingCountry">
+                      <option value="US">美国</option>
+                      <option value="CN">中国</option>
+                      <option value="SG">新加坡</option>
+                      <option value="GB">英国</option>
+                    </select>
+                  </label>
+                  <label>
+                    卡号
+                    <input id="cardNumber" value="1234 1234 1234 1234">
+                  </label>
+                  <label>
+                    有效期
+                    <input id="cardExpiry" value="12/30">
+                  </label>
+                  <label>
+                    安全码
+                    <input id="cardCvc" value="123">
+                  </label>
+                  <label>
+                    持卡人
+                    <input id="cardHolder" value="IPWeb Demo">
+                  </label>
+                </div>
+              </section>
+            </div>
+
+            <p class="muted" id="paymentPrototypeNote">当前为低保真原型，确认支付会按钱包抵扣与在线补差拆分写入订单详情。</p>
+            <div class="toolbar" style="margin-top: 16px;">
+              <button class="primary-btn" id="confirmPayment" type="button">Confirm Payment</button>
+              <button class="secondary-btn" id="cancelFromCheckout" type="button">取消订单并释放库存</button>
+            </div>
+          </section>
+
+          <aside class="readonly-summary" aria-label="Checkout Summary">
+            <h2>Summary</h2>
+            <div class="summary-row"><span>订单号</span><strong id="checkoutOrderNo">-</strong></div>
+            <div class="summary-row"><span>产品名称</span><strong id="checkoutProductName">Static Proxy</strong></div>
+            <div class="summary-row total-row"><span>待支付价格</span><strong id="checkoutAmount">$0.00</strong></div>
+            <div class="notice ok lock-box" id="checkoutLock">待支付订单已生成，库存锁定 15 分钟。</div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="ordersView" class="route-view" hidden>
+        <div class="topbar">
+          <div class="page-title">
+            <h1>静态代理订单</h1>
+            <p>展示 Continue 后生成的订单，可按状态筛选、查看详情、继续支付或取消。</p>
+          </div>
+          <div class="toolbar">
+            <button class="secondary-btn" data-view-target="checkout" type="button">返回 Checkout</button>
+            <button class="ghost-btn" id="createAnotherOrder" type="button">模拟再次 Continue</button>
+          </div>
+        </div>
+
+        <section class="panel order-shell">
+          <div class="order-controls">
+            <div class="order-filter-tabs" id="orderStatusFilters" aria-label="订单状态筛选">
+              <button class="filter-tab active" data-order-filter="all" type="button">全部</button>
+              <button class="filter-tab" data-order-filter="pending" type="button">待支付</button>
+              <button class="filter-tab" data-order-filter="paid" type="button">已支付</button>
+              <button class="filter-tab" data-order-filter="inactive" type="button">已取消/失效</button>
+              <button class="filter-tab" data-order-filter="issue" type="button">失败/异常</button>
+            </div>
+            <label class="order-search-label">
+              <span>搜索订单</span>
+              <input id="orderSearch" type="search" placeholder="搜索订单号 / 产品名称" autocomplete="off">
+            </label>
+          </div>
+          <div id="orderList" class="order-list"></div>
+        </section>
+      </section>
+
+      <section id="orderDetailView" class="route-view" hidden>
+        <div class="topbar">
+          <div class="page-title">
+            <h1>订单详情</h1>
+            <p>订单详情保留购买配置页形成的规格快照，Checkout 只读取支付所需摘要。</p>
+          </div>
+          <div class="toolbar">
+            <button class="secondary-btn" data-view-target="orders" type="button">返回订单列表</button>
+          </div>
+        </div>
+
+        <section class="panel" id="orderDetailBody"></section>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const money = value => `$${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const roundMoney = value => Math.round((value + Number.EPSILON) * 100) / 100;
+
+    const statusText = {
+      pending: "待支付",
+      paid: "已支付",
+      cancelled: "已取消",
+      expired: "已过期",
+      autoRenewalFailed: "自动续费失败"
+    };
+
+    const orderTypeText = {
+      purchase: "首次购买",
+      manualRenewal: "手动续费",
+      autoRenewal: "自动续费"
+    };
+
+    const deliveryStatusText = {
+      notStarted: "待交付",
+      delivering: "交付中",
+      completed: "已交付",
+      partialRefunded: "部分交付已退款",
+      failedRefunded: "交付失败已退款"
+    };
+
+    const state = {
+      view: "checkout",
+      activeOrderId: "",
+      sequence: 1,
+      walletScenario: "split",
+      walletBalance: 0,
+      useWallet: true,
+      onlinePaymentMethod: "Credit Card",
+      onlinePaymentOutcome: "success",
+      lastPaymentMessage: "",
+      orderStatusFilter: "all",
+      orderSearchQuery: "",
+      orders: []
+    };
+
+    const baseSpec = {
+      exclusivity: "共享",
+      quality: "标准",
+      useCase: "SEO / SERP 分析",
+      udp: "关闭",
+      sourceMode: "指定 C 段",
+      proxyCount: 100,
+      bandwidth: "1,000 GB",
+      connectionCount: "200 / IP",
+      duration: "30 天",
+      random: "N/A",
+      replacements: "无 / 10 手动",
+      addons: "None",
+      coupon: "IPWEB10 -10%"
+    };
+
+    function defaultDelivery(proxyCount = baseSpec.proxyCount) {
+      return {
+        status: "notStarted",
+        purchasedCount: proxyCount,
+        deliveredCount: 0,
+        deliveringCount: 0,
+        failedCount: 0,
+        refundTotal: 0,
+        refundTarget: "钱包",
+        failures: []
+      };
+    }
+
+    function partialRefundDelivery() {
+      return {
+        status: "partialRefunded",
+        purchasedCount: 100,
+        deliveredCount: 96,
+        deliveringCount: 0,
+        failedCount: 4,
+        refundTotal: 3.2,
+        refundTarget: "钱包",
+        failures: [
+          { host: "89.100.147.211", region: "RO", reason: "交付超时", unitPaid: 0.8, refundAmount: 0.8, refundedAt: nowStamp(), target: "钱包" },
+          { host: "92.199.174.24", region: "RO", reason: "资源不足", unitPaid: 0.8, refundAmount: 0.8, refundedAt: nowStamp(), target: "钱包" },
+          { host: "89.12.123.155", region: "RO", reason: "交付超时", unitPaid: 0.8, refundAmount: 0.8, refundedAt: nowStamp(), target: "钱包" },
+          { host: "188.122.153.225", region: "RO", reason: "资源不足", unitPaid: 0.8, refundAmount: 0.8, refundedAt: nowStamp(), target: "钱包" }
+        ]
+      };
+    }
+
+    function nowStamp() {
+      return Date.now();
+    }
+
+    function orderNo(sequence) {
+      const datePart = new Date().toISOString().slice(0, 10).replaceAll("-", "");
+      return `SP-${datePart}-${String(sequence).padStart(4, "0")}`;
+    }
+
+    function walletBalanceForScenario(order, scenario = state.walletScenario) {
+      if (!order) return 0;
+      if (scenario === "enough") return roundMoney(order.amount + 5);
+      if (scenario === "zero") return 0;
+      return roundMoney(Math.max(0.01, order.amount * 0.38));
+    }
+
+    function applyWalletScenario(order = activeOrder()) {
+      state.walletBalance = walletBalanceForScenario(order);
+      state.useWallet = state.walletBalance > 0;
+    }
+
+    function createPendingOrder(amount = 0.80, overrides = {}) {
+      const sequence = state.sequence;
+      const createdAt = overrides.createdAt || nowStamp();
+      const spec = { ...baseSpec, ...(overrides.spec || {}) };
+      const order = {
+        id: overrides.id || `order-${createdAt}-${sequence}`,
+        orderNo: overrides.orderNo || orderNo(sequence),
+        productName: overrides.productName || "Static Proxy",
+        orderType: overrides.orderType || "purchase",
+        status: overrides.status || "pending",
+        amount,
+        createdAt,
+        lockExpiresAt: createdAt + 15 * 60 * 1000,
+        payment: overrides.payment || {
+          status: "unpaid",
+          walletAmount: 0,
+          onlineAmount: 0,
+          onlineMethod: "",
+          paidAt: null,
+          failureReason: ""
+        },
+        delivery: overrides.delivery || defaultDelivery(spec.proxyCount),
+        renewal: overrides.renewal || null,
+        spec,
+        history: overrides.history || [
+          { at: createdAt, text: "创建待支付订单。" },
+          { at: createdAt, text: "锁定库存 15 分钟。" }
+        ]
+      };
+      state.sequence += 1;
+      state.orders.unshift(order);
+      if (overrides.activate !== false) {
+        state.activeOrderId = order.id;
+        applyWalletScenario(order);
+        state.lastPaymentMessage = "";
+      }
+      return order;
+    }
+
+    function incomingManualRenewalParams() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("manualRenewal") !== "1") return null;
+      const affectedIps = (params.get("affectedIps") || "")
+        .split(",")
+        .map(value => value.trim())
+        .filter(Boolean);
+      const durationDays = Number(params.get("duration") || "30");
+      const ipCount = Number(params.get("ipCount") || affectedIps.length || "1");
+      const amount = Number(params.get("amount") || (ipCount * durationDays * 1.18).toFixed(2));
+      return {
+        sourceOrderNo: params.get("sourceOrder") || "-",
+        ipCount,
+        durationDays,
+        amount,
+        affectedIps
+      };
+    }
+
+    function createManualRenewalOrderFromParams(incoming = incomingManualRenewalParams()) {
+      if (!incoming) return null;
+      const cycle = incoming.durationDays === 365 ? "1 年" : `${incoming.durationDays} 天`;
+      const affectedIps = incoming.affectedIps.length
+        ? incoming.affectedIps
+        : [`${incoming.ipCount.toLocaleString()} 条 IP`];
+      const createdAt = nowStamp();
+      return createPendingOrder(incoming.amount, {
+        createdAt,
+        orderType: "manualRenewal",
+        spec: {
+          sourceMode: "续费资源",
+          proxyCount: incoming.ipCount,
+          duration: cycle,
+          coupon: "None"
+        },
+        renewal: {
+          sourceOrderNo: incoming.sourceOrderNo,
+          ipCount: incoming.ipCount,
+          cycle,
+          newExpireTime: `支付成功后顺延 ${cycle}`,
+          affectedIps
+        },
+        history: [
+          { at: createdAt, text: "用户从我的IP发起手动续费。" },
+          { at: createdAt, text: "创建手动续费待支付订单，资源到期时间尚未变化。" },
+          { at: createdAt, text: "进入 Checkout，等待用户完成续费支付。" }
+        ]
+      });
+    }
+
+    function seedLinkedDemoOrders() {
+      const paidAt = nowStamp() - 16 * 60 * 1000;
+      createPendingOrder(80, {
+        activate: false,
+        orderNo: "SP-20260603-0101",
+        orderType: "purchase",
+        status: "paid",
+        payment: {
+          status: "paid",
+          walletAmount: 30,
+          onlineAmount: 50,
+          onlineMethod: "Credit Card",
+          paidAt,
+          failureReason: ""
+        },
+        delivery: partialRefundDelivery(),
+        history: [
+          { at: paidAt, text: "支付成功，订单已支付。" },
+          { at: paidAt, text: "进入 5 分钟交付窗口。" },
+          { at: paidAt + 5 * 60 * 1000, text: "部分交付失败，退款已退回钱包。" }
+        ]
+      });
+
+      createPendingOrder(16, {
+        activate: false,
+        orderNo: "SP-20260603-0102",
+        orderType: "manualRenewal",
+        status: "pending",
+        renewal: {
+          sourceOrderNo: "SP-20260530-0098",
+          ipCount: 20,
+          cycle: "30 天",
+          newExpireTime: "支付成功后顺延 30 天",
+          affectedIps: ["44.100.28.64", "61.199.55.127", "89.144.159.239"]
+        },
+        history: [
+          { at: nowStamp() - 3 * 60 * 1000, text: "用户从我的IP发起手动续费。" },
+          { at: nowStamp() - 3 * 60 * 1000, text: "创建待支付续费订单，资源到期时间尚未变化。" }
+        ]
+      });
+
+      createPendingOrder(3.2, {
+        activate: false,
+        orderNo: "SP-20260603-0103",
+        orderType: "autoRenewal",
+        status: "autoRenewalFailed",
+        payment: {
+          status: "failed",
+          walletAmount: 0,
+          onlineAmount: 0,
+          onlineMethod: "Wallet",
+          paidAt: null,
+          failureReason: "钱包余额不足，自动续费失败。"
+        },
+        renewal: {
+          sourceOrderNo: "SP-20260516-0061",
+          ipCount: 4,
+          cycle: "30 天",
+          triggerRule: "到期前 3 天",
+          newExpireTime: "未续费，保持原到期时间",
+          affectedIps: ["188.4.189.59", "92.67.138.190", "188.166.165.3", "5.15.192.66"]
+        },
+        history: [
+          { at: nowStamp() - 20 * 60 * 1000, text: "到达自动续费触发时间。" },
+          { at: nowStamp() - 20 * 60 * 1000, text: "钱包余额不足，自动续费失败。" }
+        ]
+      });
+
+      createPendingOrder(0.92, {
+        activate: false,
+        orderNo: "SP-20260603-0104",
+        orderType: "purchase",
+        status: "cancelled",
+        createdAt: nowStamp() - 36 * 60 * 1000,
+        spec: {
+          sourceMode: "指定 IP",
+          proxyCount: 12,
+          bandwidth: "250 GB",
+          duration: "7 天",
+          useCase: "广告验证",
+          coupon: "None"
+        },
+        history: [
+          { at: nowStamp() - 36 * 60 * 1000, text: "创建待支付订单。" },
+          { at: nowStamp() - 35 * 60 * 1000, text: "用户取消待支付订单，库存已释放。" }
+        ]
+      });
+
+      createPendingOrder(1.18, {
+        activate: false,
+        orderNo: "SP-20260603-0105",
+        orderType: "purchase",
+        status: "expired",
+        createdAt: nowStamp() - 72 * 60 * 1000,
+        spec: {
+          sourceMode: "随机",
+          proxyCount: 20,
+          bandwidth: "500 GB",
+          duration: "30 天",
+          useCase: "数据采集",
+          coupon: "None"
+        },
+        history: [
+          { at: nowStamp() - 72 * 60 * 1000, text: "创建待支付订单。" },
+          { at: nowStamp() - 57 * 60 * 1000, text: "库存锁定 15 分钟超时，订单已过期并释放库存。" }
+        ]
+      });
+    }
+
+    function activeOrder() {
+      return state.orders.find(order => order.id === state.activeOrderId) || null;
+    }
+
+    function formatDateTime(timestamp) {
+      return new Intl.DateTimeFormat("zh-CN", {
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      }).format(new Date(timestamp));
+    }
+
+    function addHistory(order, text, at = nowStamp()) {
+      order.history.push({ at, text });
+    }
+
+    function switchView(view, orderId = state.activeOrderId) {
+      const previousOrderId = state.activeOrderId;
+      state.view = view;
+      if (orderId) {
+        state.activeOrderId = orderId;
+      }
+      const order = activeOrder();
+      if (view === "checkout" && order && order.status === "pending" && order.id !== previousOrderId) {
+        applyWalletScenario(order);
+        state.lastPaymentMessage = "";
+      }
+      render();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function updateOrderStatus(orderId, status) {
+      const order = state.orders.find(item => item.id === orderId);
+      if (!order || order.status !== "pending") return;
+      order.status = status;
+      if (status === "expired") {
+        order.lockExpiresAt = nowStamp();
+        addHistory(order, "库存锁定 15 分钟超时，订单已过期并释放库存。");
+      }
+      if (status === "cancelled") {
+        addHistory(order, "用户取消待支付订单，库存已释放。");
+      }
+      state.activeOrderId = order.id;
+      render();
+    }
+
+    function paymentBreakdown(order = activeOrder()) {
+      if (!order) {
+        return {
+          walletPayAmount: 0,
+          onlinePayAmount: 0,
+          afterBalance: state.walletBalance,
+          mode: "empty"
+        };
+      }
+
+      const walletPayAmount = state.useWallet
+        ? roundMoney(Math.min(order.amount, state.walletBalance))
+        : 0;
+      const onlinePayAmount = roundMoney(Math.max(0, order.amount - walletPayAmount));
+      const afterBalance = roundMoney(Math.max(0, state.walletBalance - walletPayAmount));
+      let mode = "online";
+
+      if (walletPayAmount >= order.amount) {
+        mode = "wallet";
+      } else if (walletPayAmount > 0 && onlinePayAmount > 0) {
+        mode = "split";
+      } else if (!state.useWallet) {
+        mode = "wallet-off";
+      } else if (state.walletBalance <= 0) {
+        mode = "zero-wallet";
+      }
+
+      return { walletPayAmount, onlinePayAmount, afterBalance, mode };
+    }
+
+    function paymentLabel(order, breakdown = paymentBreakdown(order)) {
+      if (!order || order.status !== "pending") return "Confirm Payment";
+      if (breakdown.mode === "wallet") return `使用钱包支付 ${money(breakdown.walletPayAmount)}`;
+      if (breakdown.mode === "split") {
+        return `支付 ${money(breakdown.onlinePayAmount)} 并使用钱包抵扣 ${money(breakdown.walletPayAmount)}`;
+      }
+      return `在线支付 ${money(breakdown.onlinePayAmount)}`;
+    }
+
+    function walletNotice(order, breakdown = paymentBreakdown(order)) {
+      if (!order) return { className: "wallet-hint warn", text: "暂无待支付订单。" };
+      if (order.status !== "pending") {
+        return { className: "wallet-hint warn", text: `当前订单状态：${statusText[order.status]}。` };
+      }
+      if (state.lastPaymentMessage) {
+        return { className: "wallet-hint error", text: state.lastPaymentMessage };
+      }
+      if (breakdown.mode === "wallet") {
+        return { className: "wallet-hint ok", text: `余额充足，将使用钱包支付 ${money(breakdown.walletPayAmount)}。` };
+      }
+      if (breakdown.mode === "split") {
+        return { className: "wallet-hint warn", text: `余额不足，将抵扣 ${money(breakdown.walletPayAmount)}，在线支付 ${money(breakdown.onlinePayAmount)}。` };
+      }
+      if (breakdown.mode === "wallet-off") {
+        return { className: "wallet-hint warn", text: `未使用钱包，本单在线支付 ${money(breakdown.onlinePayAmount)}。` };
+      }
+      return { className: "wallet-hint warn", text: `钱包余额为 0，本单在线支付 ${money(breakdown.onlinePayAmount)}。` };
+    }
+
+    function onlinePaymentHint(breakdown = paymentBreakdown()) {
+      if (breakdown.mode === "split") return "钱包余额不足，请选择在线支付补齐差价。";
+      if (breakdown.mode === "wallet-off") return "钱包抵扣已关闭，在线支付将承担本单全额。";
+      return "钱包不可用或余额为 0，请使用在线支付完成本单。";
+    }
+
+    function markOrderPaid(order, breakdown) {
+      order.status = "paid";
+      order.payment = {
+        status: "paid",
+        walletAmount: breakdown.walletPayAmount,
+        onlineAmount: breakdown.onlinePayAmount,
+        onlineMethod: breakdown.onlinePayAmount > 0 ? state.onlinePaymentMethod : "N/A",
+        paidAt: nowStamp(),
+        failureReason: ""
+      };
+      state.walletBalance = breakdown.afterBalance;
+      state.lastPaymentMessage = "";
+      if (breakdown.mode === "wallet") {
+        addHistory(order, `钱包全额支付 ${money(breakdown.walletPayAmount)} 成功，订单已支付。`);
+      } else if (breakdown.mode === "split") {
+        addHistory(order, `钱包预扣 ${money(breakdown.walletPayAmount)} 转正式扣款，在线补差 ${money(breakdown.onlinePayAmount)} 成功。`);
+      } else {
+        addHistory(order, `在线支付 ${money(breakdown.onlinePayAmount)} 成功，订单已支付。`);
+      }
+    }
+
+    function failPaymentAttempt(order, breakdown) {
+      order.payment = {
+        status: "failed",
+        walletAmount: 0,
+        onlineAmount: breakdown.onlinePayAmount,
+        onlineMethod: state.onlinePaymentMethod,
+        paidAt: null,
+        failureReason: `在线支付失败，${money(breakdown.walletPayAmount)} 钱包预扣已释放。`
+      };
+      state.lastPaymentMessage = order.payment.failureReason;
+      addHistory(order, `在线补差失败，钱包预扣 ${money(breakdown.walletPayAmount)} 已释放，订单保持待支付。`);
+    }
+
+    function renderRoutes() {
+      document.getElementById("checkoutView").hidden = state.view !== "checkout";
+      document.getElementById("ordersView").hidden = state.view !== "orders";
+      document.getElementById("orderDetailView").hidden = state.view !== "orderDetail";
+    }
+
+    function renderCheckout() {
+      const order = activeOrder();
+      const hasPendingOrder = order && order.status === "pending";
+      const breakdown = paymentBreakdown(order);
+      const notice = walletNotice(order, breakdown);
+      document.getElementById("checkoutOrderNo").textContent = order ? order.orderNo : "-";
+      document.getElementById("checkoutProductName").textContent = order ? order.productName : "Static Proxy";
+      document.getElementById("checkoutAmount").textContent = order ? money(order.amount) : "$0.00";
+      document.getElementById("checkoutLock").className = `notice ${hasPendingOrder ? "ok" : "warn"} lock-box`;
+      document.getElementById("checkoutLock").textContent = hasPendingOrder
+        ? "待支付订单已生成，库存锁定 15 分钟。"
+        : order ? `当前订单状态：${statusText[order.status]}。` : "暂无待支付订单。";
+      document.getElementById("walletCard").classList.toggle("active", state.useWallet && state.walletBalance > 0);
+      document.getElementById("useWallet").checked = state.useWallet;
+      document.getElementById("useWallet").disabled = !hasPendingOrder || state.walletBalance <= 0;
+      document.getElementById("walletScenario").value = state.walletScenario;
+      document.getElementById("onlinePaymentOutcome").value = state.onlinePaymentOutcome;
+      document.getElementById("onlinePaymentMethod").value = state.onlinePaymentMethod;
+      document.getElementById("walletBalance").textContent = money(state.walletBalance);
+      document.getElementById("walletNotice").className = notice.className;
+      document.getElementById("walletNotice").textContent = notice.text;
+      document.getElementById("onlinePaymentSection").hidden = !hasPendingOrder || breakdown.onlinePayAmount <= 0;
+      document.getElementById("onlinePayBadge").textContent = money(breakdown.onlinePayAmount);
+      document.getElementById("onlinePaymentHint").textContent = onlinePaymentHint(breakdown);
+      document.getElementById("onlinePaymentOutcome").disabled = !hasPendingOrder || breakdown.onlinePayAmount <= 0;
+      document.getElementById("onlinePaymentMethod").disabled = !hasPendingOrder || breakdown.onlinePayAmount <= 0;
+      document.getElementById("billingCountry").disabled = !hasPendingOrder || breakdown.onlinePayAmount <= 0;
+      document.getElementById("cardNumber").disabled = !hasPendingOrder || breakdown.onlinePayAmount <= 0;
+      document.getElementById("cardExpiry").disabled = !hasPendingOrder || breakdown.onlinePayAmount <= 0;
+      document.getElementById("cardCvc").disabled = !hasPendingOrder || breakdown.onlinePayAmount <= 0;
+      document.getElementById("cardHolder").disabled = !hasPendingOrder || breakdown.onlinePayAmount <= 0;
+      document.getElementById("confirmPayment").textContent = paymentLabel(order, breakdown);
+      document.getElementById("confirmPayment").disabled = !hasPendingOrder;
+      document.getElementById("cancelFromCheckout").disabled = !hasPendingOrder;
+    }
+
+    function specSummary(order) {
+      const fields = [
+        order.spec.sourceMode,
+        `${order.spec.proxyCount.toLocaleString()} IPs`,
+        order.spec.bandwidth,
+        order.spec.duration,
+        order.spec.useCase
+      ];
+      return fields.filter(Boolean).join(" · ");
+    }
+
+    function orderTypeLabel(order) {
+      return orderTypeText[order.orderType] || "首次购买";
+    }
+
+    function deliveryStatusLabel(order) {
+      if (order.orderType !== "purchase" || order.status !== "paid") return "";
+      return deliveryStatusText[order.delivery.status] || "";
+    }
+
+    function orderSummaryText(order) {
+      if (order.orderType === "manualRenewal" || order.orderType === "autoRenewal") {
+        const renewal = order.renewal;
+        return `续费 ${renewal.ipCount.toLocaleString()} IPs · ${renewal.cycle}`;
+      }
+      return specSummary(order);
+    }
+
+    function resourceStateText(order) {
+      if (order.status === "pending" && order.orderType === "purchase") {
+        return `<span class="lock-remaining">12:34</span><div class="muted">过期释放</div>`;
+      }
+      if (order.status === "pending" && order.orderType === "manualRenewal") {
+        return `<span class="lock-remaining">待支付续费</span><div class="muted">到期时间不变</div>`;
+      }
+      if (order.status === "paid" && order.orderType === "purchase") {
+        return `<span class="status-pill">${deliveryStatusLabel(order)}</span>`;
+      }
+      if (order.status === "paid" && order.orderType !== "purchase") {
+        return `<span class="status-pill paid">已续费</span>`;
+      }
+      if (order.status === "autoRenewalFailed") {
+        return `<span class="status-pill expired">钱包不足</span><div class="muted">需手动续费</div>`;
+      }
+      return `<span class="muted">-</span>`;
+    }
+
+    function orderActions(order) {
+      const detail = `<button class="secondary-btn" data-order-detail="${order.id}" type="button">详情</button>`;
+      if (order.status !== "pending") return detail;
+      return `
+        ${detail}
+        <button class="secondary-btn" data-order-pay="${order.id}" type="button">去支付</button>
+        <button class="danger-btn secondary-btn" data-order-cancel="${order.id}" type="button">取消</button>
+      `;
+    }
+
+    function paymentSplitForOrder(order) {
+      if (!order) return null;
+
+      if (order.payment.status === "paid") {
+        const hasSplit = order.payment.walletAmount > 0 || order.payment.onlineAmount > 0;
+        return hasSplit
+          ? {
+              walletAmount: order.payment.walletAmount,
+              onlineAmount: order.payment.onlineAmount,
+              totalAmount: order.amount
+            }
+          : null;
+      }
+
+      if (order.status === "pending" && order.id === state.activeOrderId) {
+        const breakdown = paymentBreakdown(order);
+        const hasWalletPart = breakdown.walletPayAmount > 0;
+        const hasOnlinePart = breakdown.onlinePayAmount > 0;
+        return hasWalletPart
+          ? {
+              walletAmount: breakdown.walletPayAmount,
+              onlineAmount: hasOnlinePart ? breakdown.onlinePayAmount : 0,
+              totalAmount: order.amount
+            }
+          : null;
+      }
+
+      return null;
+    }
+
+    function orderMatchesFilters(order) {
+      const status = state.orderStatusFilter;
+      const normalizedQuery = state.orderSearchQuery.trim().toLowerCase();
+      const statusMatches =
+        status === "all" ||
+        order.status === status ||
+        (status === "inactive" && (order.status === "cancelled" || order.status === "expired")) ||
+        (status === "issue" && order.status === "autoRenewalFailed");
+
+      const queryMatches =
+        !normalizedQuery ||
+        order.orderNo.toLowerCase().includes(normalizedQuery) ||
+        order.productName.toLowerCase().includes(normalizedQuery);
+
+      return statusMatches && queryMatches;
+    }
+
+    function renderOrderAmount(order) {
+      const split = paymentSplitForOrder(order);
+      if (!split) return `<strong>${money(order.amount)}</strong>`;
+
+      return `
+        <span class="amount-with-tooltip" tabindex="0">
+          <strong>${money(order.amount)}</strong>
+          <span class="amount-info" aria-label="查看支付拆分">i</span>
+          <span class="amount-tooltip" role="tooltip">
+            <span class="amount-tooltip-row"><span>钱包抵扣</span><strong>${money(split.walletAmount)}</strong></span>
+            <span class="amount-tooltip-row"><span>在线补差</span><strong>${money(split.onlineAmount)}</strong></span>
+            <span class="amount-tooltip-row"><span>应付金额</span><strong>${money(split.totalAmount)}</strong></span>
+          </span>
+        </span>
+      `;
+    }
+
+    function renderOrders() {
+      const list = document.getElementById("orderList");
+      const matchingOrders = state.orders.filter(orderMatchesFilters);
+
+      if (!state.orders.length) {
+        list.innerHTML = `<div class="notice warn order-empty">暂无订单。点击“模拟再次 Continue”可生成一张待支付订单。</div>`;
+        return;
+      }
+
+      if (!matchingOrders.length) {
+        list.innerHTML = `<div class="notice warn order-empty">没有符合筛选条件的订单。</div>`;
+        return;
+      }
+
+      list.innerHTML = `
+        <table class="order-table">
+          <thead>
+              <tr>
+                <th>订单</th>
+                <th>状态</th>
+                <th>摘要</th>
+                <th>金额</th>
+                <th>状态/锁定</th>
+                <th style="text-align:right;">操作</th>
+              </tr>
+          </thead>
+          <tbody>
+            ${matchingOrders.map(order => `
+              <tr>
+                <td>
+                  <div class="order-identity">
+                    <strong>${order.orderNo}</strong>
+                    <span class="muted">${order.productName} · ${orderTypeLabel(order)} · ${formatDateTime(order.createdAt)}</span>
+                  </div>
+                </td>
+                <td><span class="status-pill ${order.status}">${statusText[order.status]}</span></td>
+                <td>
+                  <div class="order-spec-summary" title="${orderSummaryText(order)}">${orderSummaryText(order)}</div>
+                </td>
+                <td>${renderOrderAmount(order)}</td>
+                <td>${resourceStateText(order)}</td>
+                <td>
+                  <div class="toolbar" style="justify-content:flex-end;">
+                    ${orderActions(order)}
+                  </div>
+                </td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function paymentRows(order) {
+      if (order.payment.status === "paid") {
+        return [
+          ["钱包支付", money(order.payment.walletAmount)],
+          ["在线支付", money(order.payment.onlineAmount)],
+          ["在线支付方式", order.payment.onlineAmount > 0 ? order.payment.onlineMethod : "N/A"],
+          ["支付状态", "已支付"],
+          ["支付时间", formatDateTime(order.payment.paidAt)],
+          ["退款来源", "钱包退钱包，在线原路退回"]
+        ];
+      }
+
+      if (order.payment.status === "failed") {
+        return [
+          ["钱包支付", "$0.00"],
+          ["在线支付", money(order.payment.onlineAmount)],
+          ["在线支付方式", order.payment.onlineMethod],
+          ["支付状态", "支付失败"],
+          ["失败原因", order.payment.failureReason],
+          ["退款来源", "未支付，无退款"]
+        ];
+      }
+
+      const breakdown = paymentBreakdown(order);
+      return [
+        ["钱包支付", money(breakdown.walletPayAmount)],
+        ["在线支付", money(breakdown.onlinePayAmount)],
+        ["在线支付方式", breakdown.onlinePayAmount > 0 ? state.onlinePaymentMethod : "N/A"],
+        ["支付状态", "待支付（预计）"],
+        ["支付时间", "待支付"],
+        ["退款来源", "支付成功后按来源退回"]
+      ];
+    }
+
+    function deliveryRows(order) {
+      if (order.orderType !== "purchase" || order.status !== "paid") return [];
+      return [
+        ["交付状态", deliveryStatusText[order.delivery.status]],
+        ["购买数量", `${order.delivery.purchasedCount.toLocaleString()} IPs`],
+        ["已交付", `${order.delivery.deliveredCount.toLocaleString()} IPs`],
+        ["交付中", `${order.delivery.deliveringCount.toLocaleString()} IPs`],
+        ["失败数量", `${order.delivery.failedCount.toLocaleString()} IPs`],
+        ["退款总金额", money(order.delivery.refundTotal)],
+        ["退款去向", order.delivery.refundTarget]
+      ];
+    }
+
+    function failureRefundRows(order) {
+      return order.delivery?.failures || [];
+    }
+
+    function renewalRows(order) {
+      if (!order.renewal) return [];
+      const rows = [
+        ["订单类型", orderTypeLabel(order)],
+        ["原当前有效订单号", order.renewal.sourceOrderNo],
+        ["续费 IP 数量", `${order.renewal.ipCount.toLocaleString()} IPs`],
+        ["续费周期", order.renewal.cycle],
+        ["新到期时间", order.renewal.newExpireTime]
+      ];
+      if (order.renewal.triggerRule) {
+        rows.splice(1, 0, ["触发规则", order.renewal.triggerRule]);
+      }
+      rows.push(["被续费 IP", renewalIpsSummary(order.renewal.affectedIps)]);
+      return rows;
+    }
+
+    function renewalIpsSummary(ips) {
+      if (!ips?.length) return "-";
+      const visibleIps = ips.slice(0, 2).join(" / ");
+      const hiddenCount = ips.length - 2;
+      return hiddenCount > 0 ? `${visibleIps} / +${hiddenCount} IPs` : visibleIps;
+    }
+
+    function renderDetailGrid(rows) {
+      return rows.map(([label, value]) => `
+        <div class="detail-item">
+          <span>${label}</span>
+          <strong>${value}</strong>
+        </div>
+      `).join("");
+    }
+
+    function renderFailureRefundTable(order) {
+      const rows = failureRefundRows(order);
+      if (!rows.length) return `<div class="notice ok">当前订单暂无失败 IP 与退款明细。</div>`;
+      return `
+        <table class="order-table">
+          <thead>
+            <tr>
+              <th>失败 IP / Host</th>
+              <th>地区</th>
+              <th>失败原因</th>
+              <th>单 IP 实付</th>
+              <th>退款金额</th>
+              <th>退款去向</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(row => `
+              <tr>
+                <td><strong>${row.host}</strong></td>
+                <td>${row.region}</td>
+                <td>${row.reason}</td>
+                <td>${money(row.unitPaid)}</td>
+                <td>${money(row.refundAmount)}</td>
+                <td>${row.target}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function renderLinkedResourceSection(order) {
+      if (order.orderType !== "purchase") {
+        return `<div class="notice warn">续费订单通过被续费 IP 的历史订单追踪资源权益。</div>`;
+      }
+      if (order.status !== "paid") {
+        return `<div class="notice warn">订单支付成功并完成交付后，可在我的IP查看资源。</div>`;
+      }
+      if (order.delivery.deliveredCount <= 0) {
+        return `<div class="notice warn">当前订单没有成功交付的可用 IP。可在失败 IP 与退款明细中核对退款。</div>`;
+      }
+      const href = `static-residential-my-ips-prototype.html?sourceOrder=${encodeURIComponent(order.orderNo)}`;
+      return `
+        <div class="notice ok">
+          成功交付 ${order.delivery.deliveredCount.toLocaleString()} 条资源，可在我的IP中按来源订单号查看。
+          <button class="primary-btn" data-view-myips="${href}" type="button" style="margin-left:12px;">查看我的IP</button>
+        </div>
+      `;
+    }
+
+    function renderAutoRenewalFailureNotice(order) {
+      if (order.status !== "autoRenewalFailed") return "";
+      const href = `static-residential-my-ips-prototype.html?sourceOrder=${encodeURIComponent(order.renewal.sourceOrderNo)}&renewAction=manual`;
+      return `
+        <div class="notice warn">
+          <strong>自动续费失败</strong><br>
+          钱包余额不足，本次自动续费未完成。资源保持原到期时间；充值后不会自动重试扣款，请前往我的IP对受影响资源发起手动续费。
+          <div class="notice-actions">
+            <button class="secondary-btn" type="button">去充值</button>
+            <button class="primary-btn" data-view-myips="${href}" type="button">去我的IP手动续费</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStatusHistory(order) {
+      return `
+        <ul class="status-history" aria-label="订单状态记录">
+          ${order.history.map(item => `
+            <li>
+              <time>${formatDateTime(item.at)}</time>
+              <strong>${item.text}</strong>
+            </li>
+          `).join("")}
+        </ul>
+      `;
+    }
+
+    function renderOrderDetail() {
+      const body = document.getElementById("orderDetailBody");
+      const order = activeOrder();
+      if (!order) {
+        body.innerHTML = `<div class="notice warn">未选择订单。</div>`;
+        return;
+      }
+
+      const baseRows = [
+        ["订单号", order.orderNo],
+        ["状态", statusText[order.status]],
+        ["产品名称", order.productName],
+        ["待支付价格", money(order.amount)]
+      ];
+      const specRows = [
+        ["独享级别", order.spec.exclusivity],
+        ["IP 质量", order.spec.quality],
+        ["业务用途", order.spec.useCase],
+        ["UDP", order.spec.udp],
+        ["IP 来源", order.spec.sourceMode],
+        ["IP 数量", `${order.spec.proxyCount.toLocaleString()} IPs`],
+        ["带宽", order.spec.bandwidth],
+        ["连接数", order.spec.connectionCount],
+        ["购买时长", order.spec.duration],
+        ["Random", order.spec.random],
+        ["Replacements", order.spec.replacements],
+        ["Add-ons", order.spec.addons],
+        ["Coupon", order.spec.coupon]
+      ];
+      const paymentDetailRows = paymentRows(order);
+
+      body.innerHTML = `
+        <div class="panel-head">
+          <div class="detail-title">
+            <h2>${order.orderNo}</h2>
+            <p class="muted">${order.productName} · 创建 ${formatDateTime(order.createdAt)}</p>
+          </div>
+          <span class="status-pill ${order.status}">${statusText[order.status]}</span>
+        </div>
+        <div class="detail-section-title">基础信息</div>
+        <div class="detail-grid">
+          ${renderDetailGrid(baseRows)}
+        </div>
+        ${renderAutoRenewalFailureNotice(order)}
+        <div class="detail-section-title">支付信息</div>
+        <div class="detail-grid">
+          ${renderDetailGrid(paymentDetailRows)}
+        </div>
+        <div class="detail-section-title">规格快照</div>
+        <div class="detail-grid">
+          ${renderDetailGrid(specRows)}
+        </div>
+        ${deliveryRows(order).length ? `
+          <div class="detail-section-title">交付结果</div>
+          <div class="detail-grid">
+            ${renderDetailGrid(deliveryRows(order))}
+          </div>
+          <div class="detail-section-title">失败 IP 与退款明细</div>
+          ${renderFailureRefundTable(order)}
+        ` : ""}
+        <div class="detail-section-title">关联资源</div>
+        ${renderLinkedResourceSection(order)}
+        ${renewalRows(order).length ? `
+          <div class="detail-section-title">续费信息</div>
+          <div class="detail-grid">
+            ${renderDetailGrid(renewalRows(order))}
+          </div>
+        ` : ""}
+        <div class="detail-section-title">状态记录</div>
+        ${renderStatusHistory(order)}
+        <div class="toolbar" style="margin-top: 16px;">
+          ${order.status === "pending" ? `<button class="primary-btn" data-order-pay="${order.id}" type="button">去支付</button>` : ""}
+          ${order.status === "pending" ? `<button class="danger-btn secondary-btn" data-order-cancel="${order.id}" type="button">取消订单并释放库存</button>` : ""}
+          ${order.status === "pending" ? `<button class="secondary-btn" data-order-expire="${order.id}" type="button">模拟 15 分钟锁定过期</button>` : ""}
+        </div>
+      `;
+    }
+
+    function renderOrderControls() {
+      document.querySelectorAll("[data-order-filter]").forEach(button => {
+        button.classList.toggle("active", button.dataset.orderFilter === state.orderStatusFilter);
+      });
+      document.getElementById("orderSearch").value = state.orderSearchQuery;
+    }
+
+    function render() {
+      renderRoutes();
+      renderCheckout();
+      renderOrderControls();
+      renderOrders();
+      renderOrderDetail();
+    }
+
+    document.querySelectorAll("[data-view-target]").forEach(button => {
+      button.addEventListener("click", () => {
+        switchView(button.dataset.viewTarget);
+      });
+    });
+
+    document.querySelectorAll("[data-order-filter]").forEach(button => {
+      button.addEventListener("click", () => {
+        state.orderStatusFilter = button.dataset.orderFilter;
+        render();
+      });
+    });
+
+    document.getElementById("orderSearch").addEventListener("input", event => {
+      state.orderSearchQuery = event.target.value;
+      render();
+    });
+
+    document.getElementById("useWallet").addEventListener("change", event => {
+      state.useWallet = event.target.checked;
+      state.lastPaymentMessage = "";
+      render();
+    });
+
+    document.getElementById("walletScenario").addEventListener("change", event => {
+      state.walletScenario = event.target.value;
+      applyWalletScenario();
+      state.lastPaymentMessage = "";
+      render();
+    });
+
+    document.getElementById("onlinePaymentOutcome").addEventListener("change", event => {
+      state.onlinePaymentOutcome = event.target.value;
+      state.lastPaymentMessage = "";
+      render();
+    });
+
+    document.getElementById("onlinePaymentMethod").addEventListener("change", event => {
+      state.onlinePaymentMethod = event.target.value;
+      render();
+    });
+
+    document.getElementById("confirmPayment").addEventListener("click", () => {
+      const order = activeOrder();
+      if (!order) return;
+      const breakdown = paymentBreakdown(order);
+      if (breakdown.onlinePayAmount > 0 && state.onlinePaymentOutcome === "fail") {
+        failPaymentAttempt(order, breakdown);
+        render();
+        return;
+      }
+
+      markOrderPaid(order, breakdown);
+      switchView("orderDetail", order.id);
+    });
+
+    document.getElementById("cancelFromCheckout").addEventListener("click", () => {
+      const order = activeOrder();
+      if (!order) return;
+      updateOrderStatus(order.id, "cancelled");
+      switchView("orderDetail", order.id);
+    });
+
+    document.getElementById("createAnotherOrder").addEventListener("click", () => {
+      createPendingOrder(0.80 + state.sequence * 0.12);
+      switchView("checkout");
+    });
+
+    document.addEventListener("click", event => {
+      const detailButton = event.target.closest("[data-order-detail]");
+      if (detailButton) {
+        switchView("orderDetail", detailButton.dataset.orderDetail);
+        return;
+      }
+
+      const payButton = event.target.closest("[data-order-pay]");
+      if (payButton) {
+        switchView("checkout", payButton.dataset.orderPay);
+        return;
+      }
+
+      const cancelButton = event.target.closest("[data-order-cancel]");
+      if (cancelButton) {
+        updateOrderStatus(cancelButton.dataset.orderCancel, "cancelled");
+        switchView("orderDetail", cancelButton.dataset.orderCancel);
+        return;
+      }
+
+      const myIpsButton = event.target.closest("[data-view-myips]");
+      if (myIpsButton) {
+        window.location.href = myIpsButton.dataset.viewMyips;
+        return;
+      }
+
+      const expireButton = event.target.closest("[data-order-expire]");
+      if (expireButton) {
+        updateOrderStatus(expireButton.dataset.orderExpire, "expired");
+      }
+    });
+
+    const incomingManualRenewal = incomingManualRenewalParams();
+    if (!incomingManualRenewal) {
+      createPendingOrder();
+    }
+    seedLinkedDemoOrders();
+    if (incomingManualRenewal) {
+      createManualRenewalOrderFromParams(incomingManualRenewal);
+    }
+    render();
+  </script>
+</body>
+</html>

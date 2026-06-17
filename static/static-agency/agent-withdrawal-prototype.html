@@ -1,0 +1,1407 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>静态代理 · 代理商提现申请原型</title>
+  <style>
+    :root {
+      --bg: #f5f6f3;
+      --surface: #fffdf8;
+      --surface-2: #eef2ee;
+      --ink: #1d2824;
+      --muted: #63716b;
+      --line: #d8ded7;
+      --line-strong: #aeb9b0;
+      --accent: #17665d;
+      --accent-soft: #dff0ed;
+      --blue: #235b87;
+      --blue-soft: #e4eff8;
+      --amber: #8a5a00;
+      --amber-soft: #fff1c8;
+      --red: #a0342a;
+      --red-soft: #ffe2de;
+      --green: #28684e;
+      --green-soft: #dcefe5;
+      --shadow: 0 16px 34px rgba(35, 43, 37, 0.1);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      width: 100%;
+    }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: var(--sans);
+      letter-spacing: 0;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 236px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding: 22px 16px;
+      color: #f8f4ec;
+      background: #222a27;
+    }
+
+    .brand {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      border-radius: 7px;
+      background: #2d3935;
+      font-weight: 900;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 2px;
+      color: #aebbb6;
+      font-size: 12px;
+    }
+
+    .nav-label {
+      color: #aebbb6;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav a {
+      min-height: 38px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 10px;
+      color: #dce4e0;
+      background: transparent;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .nav a.active,
+    .nav a:hover {
+      color: #fff;
+      background: #34413d;
+    }
+
+    .nav small {
+      color: #9ba8a3;
+      font-family: var(--mono);
+      font-size: 11px;
+    }
+
+    .side-note {
+      margin-top: auto;
+      padding: 12px;
+      color: #c6d1cd;
+      background: #2b3532;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 7px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    main {
+      min-width: 0;
+      padding: 26px;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    h2 {
+      font-size: 18px;
+    }
+
+    h3 {
+      font-size: 14px;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    .page-copy {
+      max-width: 820px;
+      margin-top: 9px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .btn {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 8px 12px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .btn.ghost {
+      color: var(--accent);
+      background: var(--accent-soft);
+      border-color: #b9d8d2;
+    }
+
+    .btn.warn {
+      color: var(--amber);
+      background: var(--amber-soft);
+      border-color: #e9cc81;
+    }
+
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .icon {
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    .scenario-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 18px;
+      padding: 10px;
+      background: #e7ece7;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+    }
+
+    .scenario-bar button {
+      min-height: 32px;
+      padding: 7px 10px;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .scenario-bar button.active {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .notice {
+      display: none;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 18px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .notice.show {
+      display: flex;
+    }
+
+    .notice strong {
+      display: block;
+      margin-bottom: 2px;
+      font-size: 13px;
+    }
+
+    .notice span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .notice.warning {
+      border-color: #e8c779;
+      background: var(--amber-soft);
+    }
+
+    .notice.danger {
+      border-color: #efb2aa;
+      background: var(--red-soft);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(145px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .metric {
+      min-height: 112px;
+      padding: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .metric small {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .metric.primary {
+      color: #fff;
+      background: #1f5d55;
+      border-color: #1f5d55;
+    }
+
+    .metric.primary span,
+    .metric.primary small {
+      color: #d8ece7;
+    }
+
+    .metric.blocked strong {
+      color: var(--red);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--line);
+      background: #fbfaf5;
+    }
+
+    .panel-head p {
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .panel-body {
+      padding: 16px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label,
+    .field-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    input,
+    select {
+      min-height: 38px;
+      width: 100%;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 6px;
+      outline: 0;
+    }
+
+    input:disabled,
+    select:disabled {
+      color: #8b9691;
+      background: #eef0ed;
+      cursor: not-allowed;
+    }
+
+    .help {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .error-text {
+      color: var(--red);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .account-box {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+    }
+
+    .account-box strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .account-box span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .method-switch {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .method-option {
+      position: relative;
+      display: grid;
+      gap: 4px;
+      min-height: 78px;
+      padding: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      cursor: pointer;
+    }
+
+    .method-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .method-option span {
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    .method-option small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .method-option.active {
+      background: #f3fbf5;
+      border-color: var(--green);
+      box-shadow: inset 0 0 0 1px rgba(40, 104, 78, 0.18);
+    }
+
+    .method-option.disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .rules {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+      padding: 12px;
+      background: #f8faf7;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+    }
+
+    .rule-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .rule-row strong {
+      color: var(--ink);
+      font-family: var(--mono);
+      font-size: 13px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 820px;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      background: #f8faf7;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    td {
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .mono {
+      font-family: var(--mono);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .tag.blue {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .tag.green {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .tag.amber {
+      color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .tag.red {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .status-stack {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: 8px;
+    }
+
+    .filter-field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .filter-field label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .date-range {
+      display: grid;
+      grid-template-columns: 126px auto 126px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .date-range span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .timeline {
+      display: grid;
+      gap: 10px;
+    }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr);
+      gap: 10px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+
+    .timeline-item:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .timeline-item time {
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .detail-panel {
+      display: grid;
+      gap: 14px;
+    }
+
+    .kv {
+      display: grid;
+      gap: 8px;
+    }
+
+    .kv-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .kv-row span {
+      color: var(--muted);
+    }
+
+    .kv-row strong {
+      text-align: right;
+    }
+
+    .mobile-page-title {
+      display: none;
+    }
+
+    @media (max-width: 1100px) {
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        display: block;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+        padding: 14px;
+      }
+
+      .brand {
+        grid-template-columns: 36px minmax(0, 1fr);
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+      }
+
+      .nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .side-note {
+        display: none;
+      }
+
+      main {
+        padding: 16px;
+      }
+
+      .topbar {
+        display: grid;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .summary-grid,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .method-switch {
+        grid-template-columns: 1fr;
+      }
+
+      .metric {
+        min-height: 94px;
+      }
+
+      .account-box,
+      .panel-head {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .actions .btn {
+        width: 100%;
+      }
+
+      .status-stack {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .status-stack .btn,
+      .status-stack select,
+      .status-stack input {
+        width: 100%;
+      }
+
+      .filter-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .date-range {
+        grid-template-columns: 1fr;
+      }
+
+      .mobile-page-title {
+        display: block;
+      }
+
+      table {
+        min-width: 0;
+      }
+
+      thead {
+        display: none;
+      }
+
+      tbody {
+        display: grid;
+        gap: 10px;
+        padding: 12px;
+      }
+
+      tr {
+        display: grid;
+        gap: 8px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fff;
+      }
+
+      td {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 10px;
+        padding: 0;
+        border-bottom: 0;
+        word-break: break-word;
+      }
+
+      td::before {
+        content: attr(data-label);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">IP</div>
+        <div>
+          <strong>代理商工作台</strong>
+          <span>Static Proxy Agent</span>
+        </div>
+      </div>
+      <div>
+        <p class="nav-label">模块导航</p>
+        <nav class="nav" aria-label="代理商模块">
+          <a href="agent-price-config-list-detail-prototype.html">价格设置 <small>M01</small></a>
+          <a href="agent-users-recharge-prototype.html">我的用户 <small>M02</small></a>
+          <a href="agent-sales-orders-prototype.html">销售订单 <small>M03</small></a>
+          <a class="active" href="agent-income-billing-prototype.html">我的收入 <small>M04/M05</small></a>
+        </nav>
+      </div>
+      <div class="side-note">
+        本原型聚焦代理端提现申请与状态查看。审核、钱包入账处理、财务线下处理和异常修复后台不在本期页面展开。
+      </div>
+    </aside>
+
+    <main>
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">M05 · 提现申请</p>
+          <h1>提现申请与状态查看</h1>
+          <p class="page-copy">本原型聚焦代理端提现申请与状态查看。审核、钱包入账处理、财务线下处理和异常修复后台不在本期页面展开。</p>
+        </div>
+        <button class="btn primary" id="topApplyBtn" type="button"><span class="icon">$</span>申请提现</button>
+      </section>
+
+      <section class="scenario-bar" aria-label="原型状态切换">
+        <button type="button" class="active" data-scenario="normal">正常可申请</button>
+        <button type="button" data-scenario="processing">已有申请处理中</button>
+        <button type="button" data-scenario="window">窗口关闭</button>
+        <button type="button" data-scenario="minimum">低于最低金额</button>
+        <button type="button" data-scenario="wallet">钱包不可用</button>
+      </section>
+
+      <section class="notice" id="scenarioNotice">
+        <strong id="noticeTitle"></strong>
+        <span id="noticeBody"></span>
+      </section>
+
+      <section class="summary-grid" aria-label="提现资金摘要">
+        <article class="metric">
+          <span>账单剩余可提现金额</span>
+          <strong id="settledIncome">$8,600.00</strong>
+          <small>来自 M04 已出账账单；当前未出账周期不纳入提现。</small>
+        </article>
+        <article class="metric">
+          <span>提现冻结金额</span>
+          <strong id="frozenAmount">$0.00</strong>
+          <small>审核中、入账处理中、财务处理中或失败待处理的申请会占用当前账单金额。</small>
+        </article>
+        <article class="metric primary">
+          <span>当前可申请提现</span>
+          <strong id="withdrawable">$8,600.00</strong>
+          <small id="withdrawableHint">按账单剩余可提现金额扣除冻结 / 处理中占用后计算。</small>
+        </article>
+      </section>
+
+      <section class="layout">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2>申请提现</h2>
+              <p>金额、处理方式、收款对象、窗口、账单占用和支付密码在提交前都会重新校验。</p>
+            </div>
+            <span class="tag green" id="windowTag">窗口开放中</span>
+          </div>
+          <div class="panel-body">
+            <form id="withdrawalForm">
+              <div class="form-grid">
+                <div class="field">
+                  <label for="amount">提现金额</label>
+                  <input id="amount" name="amount" inputmode="decimal" value="8600.00" aria-describedby="amountHelp">
+                  <span class="help" id="amountHelp">最低提现金额：$100.00；金额最多 2 位小数。</span>
+                  <span class="error-text" id="amountError"></span>
+                </div>
+                <div class="field">
+                  <label for="password">支付密码 / 二次校验</label>
+                  <input id="password" name="password" type="password" value="123456">
+                  <span class="help">未设置支付密码时跳转统一安全中心，本页不展开安全设置。</span>
+                </div>
+                <div class="field full">
+                  <span class="field-label">提现处理方式</span>
+                  <div class="method-switch" role="radiogroup" aria-label="提现处理方式">
+                    <label class="method-option active" id="agentWalletOption">
+                      <input type="radio" name="processingMethod" value="agent_wallet" checked>
+                      <span>代理商钱包</span>
+                      <small>系统内自动入账</small>
+                    </label>
+                    <label class="method-option" id="offlineTransferOption">
+                      <input type="radio" name="processingMethod" value="offline_transfer">
+                      <span>线下转账</span>
+                      <small>公司财务线下处理</small>
+                    </label>
+                  </div>
+                </div>
+                <div class="field full">
+                  <span class="field-label" id="recipientLabel">入账钱包</span>
+                  <div class="account-box" id="recipientBox">
+                    <div>
+                      <strong id="recipientTitle">当前代理商钱包</strong>
+                      <span id="recipientMeta">WALLET-AG-2086 · 入账目标不可切换</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rules">
+                <div class="rule-row">
+                  <span>提现窗口</span>
+                  <strong id="windowRule">每月 5-25 日，10:00-18:00 UTC+8</strong>
+                </div>
+                <div class="rule-row">
+                  <span>最低提现金额</span>
+                  <strong>$100.00</strong>
+                </div>
+                <div class="rule-row">
+                  <span>进行中申请限制</span>
+                  <strong>同一时间仅允许 1 笔</strong>
+                </div>
+                <div class="rule-row">
+                  <span>账单占用</span>
+                  <strong>提交成功后占用当前账单剩余可提现金额</strong>
+                </div>
+                <div class="rule-row">
+                  <span>线下转账</span>
+                  <strong>公司财务处理后更新状态</strong>
+                </div>
+              </div>
+
+              <div class="actions">
+                <button class="btn" type="button">取消</button>
+                <button class="btn primary" id="submitBtn" type="submit">提交提现申请</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <aside class="panel detail-panel" aria-label="提现详情">
+          <div class="panel-head">
+            <div>
+              <h2>最近申请详情</h2>
+              <p>展示代理端能看到的状态，不展开后台审核动作。</p>
+            </div>
+          </div>
+          <div class="panel-body detail-panel">
+            <div class="kv">
+              <div class="kv-row"><span>申请单号</span><strong class="mono" id="detailNo">WD-20260608-0019</strong></div>
+              <div class="kv-row"><span>申请金额</span><strong id="detailAmount">$1,200.00</strong></div>
+              <div class="kv-row"><span>处理方式</span><strong id="detailMethod">线下转账</strong></div>
+              <div class="kv-row"><span id="detailRecipientLabel">收款对象</span><strong id="detailRecipient">代理商账户</strong></div>
+              <div class="kv-row"><span>当前状态</span><strong><span class="tag blue" id="detailStatus">财务处理中</span></strong></div>
+              <div class="kv-row"><span id="detailFlowLabel">处理结果</span><strong class="mono" id="detailFlow">等待公司财务处理</strong></div>
+            </div>
+            <div>
+              <h3>状态时间线</h3>
+              <div class="timeline" style="margin-top:10px">
+                <div class="timeline-item">
+                  <time>06-08</time>
+                  <div><strong id="timelineOneTitle">已提交申请</strong><br><span class="muted" id="timelineOneBody">系统冻结 $1,200.00，等待后台审核。</span></div>
+                </div>
+                <div class="timeline-item">
+                  <time>06-08</time>
+                  <div><strong id="timelineTwoTitle">财务处理中</strong><br><span class="muted" id="timelineTwoBody">审核通过后由公司财务线下处理，代理端仅展示状态。</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="panel" style="margin-top:16px">
+        <div class="panel-head">
+          <div>
+            <h2>提现记录</h2>
+            <p>记录列表用于状态查看和对账；默认按申请时间倒序。</p>
+          </div>
+          <div class="status-stack">
+            <div class="filter-field">
+              <label for="applyStartDate">申请时间</label>
+              <div class="date-range" aria-label="申请时间筛选，默认近 90 天">
+                <input id="applyStartDate" name="applyStartDate" type="date" value="2026-03-11" aria-label="申请开始日期">
+                <span>至</span>
+                <input id="applyEndDate" name="applyEndDate" type="date" value="2026-06-09" aria-label="申请结束日期">
+              </div>
+              <span class="help">默认近 90 天</span>
+            </div>
+            <div class="filter-field">
+              <label for="statusFilter">状态筛选</label>
+              <select id="statusFilter" name="statusFilter" aria-label="状态筛选" style="width:150px">
+                <option>全部状态</option>
+                <option>已入钱包</option>
+                <option>入账处理中</option>
+                <option>入账失败待处理</option>
+                <option>财务处理中</option>
+                <option>已完成</option>
+                <option>处理失败待处理</option>
+              </select>
+            </div>
+            <div class="filter-actions" aria-label="提现记录筛选操作">
+              <button class="btn" id="filterSearchBtn" type="button">查询</button>
+              <button class="btn ghost" id="filterResetBtn" type="button">重置</button>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>申请单号 / 时间</th>
+                <th>提现金额</th>
+                <th>处理方式 / 收款对象</th>
+                <th>状态</th>
+                <th>冻结 / 处理结果</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td data-label="申请单号"><strong class="mono" id="recordNo">WD-20260608-0019</strong><br><span class="muted" id="recordTime">2026-06-08 14:20</span></td>
+                <td data-label="提现金额"><strong id="recordAmount">$1,200.00</strong></td>
+                <td data-label="处理方式 / 收款对象"><span id="recordMethod">线下转账</span><br><span class="muted" id="recordRecipient">代理商账户</span></td>
+                <td data-label="状态"><span class="tag blue" id="recordStatus">财务处理中</span></td>
+                <td data-label="冻结 / 处理结果"><span id="recordFundState">财务处理中</span><br><span class="muted" id="recordFlow">等待公司财务处理</span></td>
+                <td data-label="操作"><button class="btn ghost" type="button">详情</button></td>
+              </tr>
+              <tr>
+                <td data-label="申请单号"><strong class="mono">WD-20260601-0042</strong><br><span class="muted">2026-06-01 11:08</span></td>
+                <td data-label="提现金额"><strong>$3,500.00</strong></td>
+                <td data-label="处理方式 / 收款对象">代理商钱包<br><span class="muted">当前代理商钱包 / WALLET-AG-2086</span></td>
+                <td data-label="状态"><span class="tag green">已入钱包</span></td>
+                <td data-label="冻结 / 处理结果">已入钱包<br><span class="muted mono">WALLET-IN-842013</span></td>
+                <td data-label="操作"><button class="btn ghost" type="button">详情</button></td>
+              </tr>
+              <tr>
+                <td data-label="申请单号"><strong class="mono">WD-20260520-0031</strong><br><span class="muted">2026-05-20 16:31</span></td>
+                <td data-label="提现金额"><strong>$900.00</strong></td>
+                <td data-label="处理方式 / 收款对象">线下转账<br><span class="muted">代理商账户</span></td>
+                <td data-label="状态"><span class="tag red">处理失败待处理</span></td>
+                <td data-label="冻结 / 处理结果">处理失败待处理<br><span class="muted">等待后台处理</span></td>
+                <td data-label="操作"><button class="btn ghost" type="button">详情</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      normal: {
+        notice: null,
+        settled: "$8,600.00",
+        frozen: "$0.00",
+        withdrawable: "$8,600.00",
+        hint: "按账单剩余可提现金额扣除冻结 / 处理中占用后计算。",
+        tag: ["窗口开放中", "green"],
+        amount: "8600.00",
+        formDisabled: false,
+        walletUnavailable: false,
+        preferredMethod: "agent_wallet",
+        error: ""
+      },
+      processing: {
+        notice: ["warning", "已有提现申请处理中", "同一代理商同一时间只允许 1 笔进行中提现申请；待审核、审核中、入账处理中、财务处理中、入账失败待处理、处理失败待处理都会阻断新申请。"],
+        settled: "$8,600.00",
+        frozen: "$1,200.00",
+        withdrawable: "$0.00",
+        hint: "当前账单已关联 WD-20260608-0019，请等待该申请完成、驳回或后台关闭。",
+        tag: ["已有申请处理中", "amber"],
+        amount: "",
+        formDisabled: true,
+        walletUnavailable: false,
+        preferredMethod: "offline_transfer",
+        error: "已有 WD-20260608-0019 财务处理中，暂不可提交新申请。"
+      },
+      window: {
+        notice: ["warning", "当前不在提现窗口", "提现记录仍可查看；申请入口禁用，并展示下次开放时间。窗口规则由后台配置返回。"],
+        settled: "$8,600.00",
+        frozen: "$0.00",
+        withdrawable: "$8,600.00",
+        hint: "下次开放：2026-06-10 10:00 UTC+8。",
+        tag: ["窗口关闭", "amber"],
+        amount: "8600.00",
+        formDisabled: true,
+        walletUnavailable: false,
+        preferredMethod: "agent_wallet",
+        error: "当前不在提现窗口，无法提交申请。"
+      },
+      minimum: {
+        notice: ["warning", "当前可申请金额低于最低提现金额", "最低提现金额为 $100.00；当前可申请 $68.00，还差 $32.00。"],
+        settled: "$68.00",
+        frozen: "$0.00",
+        withdrawable: "$68.00",
+        hint: "最低提现金额 $100.00，当前还差 $32.00。",
+        tag: ["低于最低金额", "amber"],
+        amount: "68.00",
+        formDisabled: true,
+        walletUnavailable: false,
+        preferredMethod: "agent_wallet",
+        error: "当前可申请金额低于最低提现金额，还差 $32.00。"
+      },
+      wallet: {
+        notice: ["warning", "当前代理商钱包不可用", "代理商钱包方式暂不可用；可选择线下转账，公司财务处理完成后更新状态。"],
+        settled: "$8,600.00",
+        frozen: "$0.00",
+        withdrawable: "$8,600.00",
+        hint: "钱包状态只影响代理商钱包方式；当前可申请金额仍来自账单剩余可提现金额。",
+        tag: ["可线下转账", "amber"],
+        amount: "8600.00",
+        formDisabled: false,
+        walletUnavailable: true,
+        preferredMethod: "offline_transfer",
+        error: "当前代理商钱包不可用，请选择线下转账或稍后再试。"
+      }
+    };
+
+    const minWithdrawalAmount = 100;
+
+    const refs = {
+      notice: document.getElementById("scenarioNotice"),
+      noticeTitle: document.getElementById("noticeTitle"),
+      noticeBody: document.getElementById("noticeBody"),
+      settled: document.getElementById("settledIncome"),
+      frozen: document.getElementById("frozenAmount"),
+      withdrawable: document.getElementById("withdrawable"),
+      hint: document.getElementById("withdrawableHint"),
+      tag: document.getElementById("windowTag"),
+      amount: document.getElementById("amount"),
+      password: document.getElementById("password"),
+      applyStartDate: document.getElementById("applyStartDate"),
+      applyEndDate: document.getElementById("applyEndDate"),
+      statusFilter: document.getElementById("statusFilter"),
+      filterReset: document.getElementById("filterResetBtn"),
+      methodOptions: Array.from(document.querySelectorAll("input[name='processingMethod']")),
+      agentWalletOption: document.getElementById("agentWalletOption"),
+      offlineTransferOption: document.getElementById("offlineTransferOption"),
+      recipientLabel: document.getElementById("recipientLabel"),
+      recipientTitle: document.getElementById("recipientTitle"),
+      recipientMeta: document.getElementById("recipientMeta"),
+      error: document.getElementById("amountError"),
+      submit: document.getElementById("submitBtn"),
+      topApply: document.getElementById("topApplyBtn"),
+      detailNo: document.getElementById("detailNo"),
+      detailAmount: document.getElementById("detailAmount"),
+      detailMethod: document.getElementById("detailMethod"),
+      detailRecipientLabel: document.getElementById("detailRecipientLabel"),
+      detailRecipient: document.getElementById("detailRecipient"),
+      detailStatus: document.getElementById("detailStatus"),
+      detailFlowLabel: document.getElementById("detailFlowLabel"),
+      detailFlow: document.getElementById("detailFlow"),
+      timelineOneTitle: document.getElementById("timelineOneTitle"),
+      timelineOneBody: document.getElementById("timelineOneBody"),
+      timelineTwoTitle: document.getElementById("timelineTwoTitle"),
+      timelineTwoBody: document.getElementById("timelineTwoBody"),
+      recordNo: document.getElementById("recordNo"),
+      recordTime: document.getElementById("recordTime"),
+      recordAmount: document.getElementById("recordAmount"),
+      recordMethod: document.getElementById("recordMethod"),
+      recordRecipient: document.getElementById("recordRecipient"),
+      recordStatus: document.getElementById("recordStatus"),
+      recordFundState: document.getElementById("recordFundState"),
+      recordFlow: document.getElementById("recordFlow")
+    };
+
+    function setProcessingMethod(method, options = {}) {
+      const walletUnavailable = Boolean(options.walletUnavailable);
+      const effectiveMethod = walletUnavailable && method === "agent_wallet" ? "offline_transfer" : method;
+
+      refs.methodOptions.forEach((input) => {
+        input.checked = input.value === effectiveMethod;
+        input.closest(".method-option").classList.toggle("active", input.value === effectiveMethod);
+      });
+
+      refs.agentWalletOption.classList.toggle("disabled", walletUnavailable);
+
+      if (effectiveMethod === "offline_transfer") {
+        refs.recipientLabel.textContent = "收款对象";
+        refs.recipientTitle.textContent = "代理商账户";
+        refs.recipientMeta.textContent = "公司财务线下处理，处理完成后更新提现状态";
+        return "offline_transfer";
+      }
+
+      refs.recipientLabel.textContent = "入账钱包";
+      refs.recipientTitle.textContent = "当前代理商钱包";
+      refs.recipientMeta.textContent = "WALLET-AG-2086 · 入账目标不可切换";
+      return "agent_wallet";
+    }
+
+    function renderScenario(name) {
+      const data = state[name];
+      document.querySelectorAll("[data-scenario]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.scenario === name);
+      });
+
+      if (data.notice) {
+        refs.notice.className = `notice show ${data.notice[0]}`;
+        refs.noticeTitle.textContent = data.notice[1];
+        refs.noticeBody.textContent = data.notice[2];
+      } else {
+        refs.notice.className = "notice";
+        refs.noticeTitle.textContent = "";
+        refs.noticeBody.textContent = "";
+      }
+
+      refs.settled.textContent = data.settled;
+      refs.frozen.textContent = data.frozen;
+      refs.withdrawable.textContent = data.withdrawable;
+      refs.hint.textContent = data.hint;
+      refs.amount.value = data.amount;
+      refs.error.textContent = data.error;
+      refs.tag.textContent = data.tag[0];
+      refs.tag.className = `tag ${data.tag[1]}`;
+      refs.amount.disabled = data.formDisabled;
+      refs.password.disabled = data.formDisabled;
+      refs.submit.disabled = data.formDisabled;
+      refs.topApply.disabled = data.formDisabled;
+      setProcessingMethod(data.preferredMethod, { walletUnavailable: data.walletUnavailable });
+      refs.methodOptions.forEach((input) => {
+        input.disabled = data.formDisabled || (data.walletUnavailable && input.value === "agent_wallet");
+      });
+
+      if (name === "processing") {
+        refs.detailNo.textContent = "WD-20260608-0019";
+        refs.detailAmount.textContent = "$1,200.00";
+        refs.detailMethod.textContent = "线下转账";
+        refs.detailRecipientLabel.textContent = "收款对象";
+        refs.detailRecipient.textContent = "代理商账户";
+        refs.detailStatus.textContent = "财务处理中";
+        refs.detailStatus.className = "tag blue";
+        refs.detailFlowLabel.textContent = "处理结果";
+        refs.detailFlow.textContent = "等待公司财务处理";
+        refs.timelineOneTitle.textContent = "已提交申请";
+        refs.timelineOneBody.textContent = "系统冻结 $1,200.00，等待后台审核。";
+        refs.timelineTwoTitle.textContent = "财务处理中";
+        refs.timelineTwoBody.textContent = "审核通过后由公司财务线下处理，代理端仅展示状态。";
+        refs.recordNo.textContent = "WD-20260608-0019";
+        refs.recordTime.textContent = "2026-06-08 14:20";
+        refs.recordAmount.textContent = "$1,200.00";
+        refs.recordMethod.textContent = "线下转账";
+        refs.recordRecipient.textContent = "代理商账户";
+        refs.recordStatus.textContent = "财务处理中";
+        refs.recordStatus.className = "tag blue";
+        refs.recordFundState.textContent = "财务处理中";
+        refs.recordFlow.textContent = "等待公司财务处理";
+      } else {
+        refs.detailNo.textContent = "WD-20260608-0018";
+        refs.detailAmount.textContent = "$2,200.00";
+        refs.detailMethod.textContent = "代理商钱包";
+        refs.detailRecipientLabel.textContent = "入账钱包";
+        refs.detailRecipient.textContent = "当前代理商钱包 / WALLET-AG-2086";
+        refs.detailStatus.textContent = "已入钱包";
+        refs.detailStatus.className = "tag green";
+        refs.detailFlowLabel.textContent = "钱包入账流水";
+        refs.detailFlow.textContent = "WALLET-IN-842013";
+        refs.timelineOneTitle.textContent = "已提交申请";
+        refs.timelineOneBody.textContent = "系统冻结 $2,200.00，等待后台审核。";
+        refs.timelineTwoTitle.textContent = "已入钱包";
+        refs.timelineTwoBody.textContent = "冻结金额已转入当前代理商钱包，申请完成。";
+        refs.recordNo.textContent = "WD-20260608-0018";
+        refs.recordTime.textContent = "2026-06-08 10:35";
+        refs.recordAmount.textContent = "$2,200.00";
+        refs.recordMethod.textContent = "代理商钱包";
+        refs.recordRecipient.textContent = "当前代理商钱包 / WALLET-AG-2086";
+        refs.recordStatus.textContent = "已入钱包";
+        refs.recordStatus.className = "tag green";
+        refs.recordFundState.textContent = "已入钱包";
+        refs.recordFlow.textContent = "WALLET-IN-842013";
+      }
+    }
+
+    document.querySelectorAll("[data-scenario]").forEach((button) => {
+      button.addEventListener("click", () => renderScenario(button.dataset.scenario));
+    });
+
+    refs.methodOptions.forEach((input) => {
+      input.addEventListener("change", () => {
+        if (refs.agentWalletOption.classList.contains("disabled") && input.value === "agent_wallet") {
+          setProcessingMethod("offline_transfer", { walletUnavailable: true });
+          refs.error.textContent = "当前代理商钱包不可用，请选择线下转账或稍后再试。";
+          return;
+        }
+        setProcessingMethod(input.value);
+        refs.error.textContent = "";
+      });
+    });
+
+    refs.filterReset.addEventListener("click", () => {
+      refs.applyStartDate.value = "2026-03-11";
+      refs.applyEndDate.value = "2026-06-09";
+      refs.statusFilter.value = "全部状态";
+    });
+
+    function parseMoney(text) {
+      return Number(String(text).replace(/[^0-9.]/g, ""));
+    }
+
+    document.getElementById("withdrawalForm").addEventListener("submit", (event) => {
+      event.preventDefault();
+      const amount = Number(refs.amount.value);
+      const withdrawableAmount = parseMoney(refs.withdrawable.textContent);
+      const selectedMethod = refs.methodOptions.find((input) => input.checked)?.value || "agent_wallet";
+
+      if (refs.submit.disabled) {
+        return;
+      }
+
+      if (refs.agentWalletOption.classList.contains("disabled") && selectedMethod === "agent_wallet") {
+        refs.error.textContent = "当前代理商钱包不可用，请选择线下转账或稍后再试。";
+        return;
+      }
+
+      if (!Number.isFinite(amount) || amount <= 0 || !/^\d+(\.\d{1,2})?$/.test(refs.amount.value.trim())) {
+        refs.error.textContent = "请输入大于 0 且最多 2 位小数的提现金额。";
+        return;
+      }
+
+      if (amount < minWithdrawalAmount) {
+        refs.error.textContent = "提现金额低于最低提现金额 $100.00。";
+        return;
+      }
+
+      if (amount > withdrawableAmount) {
+        refs.error.textContent = "提现金额不能超过当前可申请提现金额。";
+        return;
+      }
+
+      refs.submit.textContent = "已提交，等待审核";
+      refs.submit.disabled = true;
+      refs.error.textContent = "";
+    });
+
+    renderScenario("normal");
+  </script>
+</body>
+</html>
